@@ -1,0 +1,2315 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Глюкоша — проект поддержки семей с СД1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Comfortaa:wght@300;400;500;600;700&family=Geologica:wght@100;200;300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --primary:#4A9FE5;--primary-light:#A8D4F5;--primary-dark:#1A5F8C;
+  --accent:#FFB347;--accent-warm:#FF8C69;--accent-coral:#FF6B6B;
+  --bg-soft:#F0F6FC;--bg-white:#FFFFFF;
+  --bg-glass:rgba(255,255,255,0.55);--bg-glass-strong:rgba(255,255,255,0.82);
+  --text-dark:#0A1E33;--text-mid:#1A4A6E;--text-light:#5A8FB0;--text-white:#FFFFFF;
+  --gradient-hero:linear-gradient(135deg,#4A9FE5 0%,#A8D4F5 40%,#FFB347 100%);
+  --gradient-card:linear-gradient(145deg,rgba(255,255,255,0.9) 0%,rgba(168,212,245,0.4) 100%);
+  --gradient-accent:linear-gradient(135deg,#FFB347 0%,#FF8C69 100%);
+  --gradient-blue:linear-gradient(135deg,#4A9FE5 0%,#1A5F8C 100%);
+  --gradient-aurora:linear-gradient(135deg,#4A9FE5,#A8D4F5,#FFB347,#FF8C69,#4A9FE5);
+  --shadow-soft:0 8px 32px rgba(74,159,229,0.12);
+  --shadow-card:0 20px 60px rgba(74,159,229,0.15);
+  --shadow-hover:0 30px 80px rgba(74,159,229,0.25);
+  --shadow-glow:0 0 40px rgba(74,159,229,0.3);
+  --radius-sm:14px;--radius-md:22px;--radius-lg:32px;--radius-xl:44px;--radius-full:9999px;
+  --transition:0.4s cubic-bezier(0.25,0.46,0.45,0.94);
+  --transition-fast:0.2s ease;--transition-bounce:0.6s cubic-bezier(0.34,1.56,0.64,1);
+  --font-heading:'Comfortaa',cursive;--font-body:'Geologica',sans-serif;--font-ui:'Inter',sans-serif;
+}
+html{scroll-behavior:smooth;font-size:16px;scrollbar-width:thin;scrollbar-color:var(--primary-light) var(--bg-soft)}
+html::-webkit-scrollbar{width:8px}
+html::-webkit-scrollbar-track{background:var(--bg-soft)}
+html::-webkit-scrollbar-thumb{background:var(--primary-light);border-radius:var(--radius-full)}
+html::-webkit-scrollbar-thumb:hover{background:var(--primary)}
+body{
+  font-family:var(--font-body);color:var(--text-dark);background:var(--bg-soft);
+  overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  cursor:none;
+}
+a{text-decoration:none;color:inherit;cursor:none}
+img{max-width:100%;display:block}
+button{cursor:none}
+
+/* === КАПЛЯ CURSOR === */
+.cursor-droplet{
+  position:fixed;pointer-events:none;z-index:99999;
+  width:22px;height:30px;
+  transform:translate(-50%,-30%);
+  transition:width 0.35s cubic-bezier(0.34,1.56,0.64,1),
+             height 0.35s cubic-bezier(0.34,1.56,0.64,1),
+             filter 0.3s ease;
+  will-change:transform;
+}
+.cursor-droplet::before{
+  content:'';display:block;width:100%;height:100%;
+  background:radial-gradient(ellipse at 40% 55%,rgba(255,255,255,0.5) 0%,var(--primary) 50%,var(--primary-dark) 100%);
+  border-radius:50% 50% 50% 50% / 65% 65% 35% 35%;
+  box-shadow:
+    inset -2px -3px 4px rgba(0,0,0,0.1),
+    inset 3px 3px 6px rgba(255,255,255,0.35),
+    0 4px 14px rgba(74,159,229,0.35);
+  transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1),
+             box-shadow 0.3s ease,
+             border-radius 0.35s ease;
+}
+.cursor-droplet::after{
+  content:'';position:absolute;
+  top:18%;left:22%;
+  width:6px;height:8px;
+  background:rgba(255,255,255,0.45);
+  border-radius:50%;
+  transform:rotate(-20deg);
+  transition:opacity 0.3s ease;
+}
+.cursor-droplet.hover{
+  width:30px;height:40px;
+  filter:drop-shadow(0 6px 18px rgba(74,159,229,0.5));
+}
+.cursor-droplet.hover::before{
+  background:radial-gradient(ellipse at 40% 55%,rgba(255,255,255,0.5) 0%,#FFB347 50%,var(--accent-warm) 100%);
+  box-shadow:
+    inset -2px -3px 4px rgba(0,0,0,0.1),
+    inset 3px 3px 6px rgba(255,255,255,0.35),
+    0 6px 20px rgba(255,179,71,0.4);
+}
+.cursor-droplet.click::before{
+  transform:scale(0.8);
+  border-radius:50%;
+}
+.cursor-droplet-trail{
+  position:fixed;pointer-events:none;z-index:99998;
+  border-radius:50% 50% 50% 50% / 65% 65% 35% 35%;
+  transform:translate(-50%,-40%);
+  transition:opacity 0.5s ease;
+}
+.cursor-droplet-trail:nth-child(2){
+  width:10px;height:13px;
+  background:rgba(74,159,229,0.25);opacity:0.5;
+}
+.cursor-droplet-trail:nth-child(3){
+  width:7px;height:9px;
+  background:rgba(168,212,245,0.25);opacity:0.35;
+}
+.cursor-droplet-trail:nth-child(4){
+  width:4px;height:6px;
+  background:rgba(74,159,229,0.2);opacity:0.2;
+}
+
+/* === SCROLL PROGRESS === */
+.scroll-progress{
+  position:fixed;top:0;left:0;height:3px;z-index:10000;
+  background:var(--gradient-aurora);background-size:300% 100%;
+  animation:gradientShift 4s ease infinite;
+  transform-origin:left;transition:transform 0.1s linear;
+}
+@keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+/* === PRELOADER === */
+.preloader{
+  position:fixed;inset:0;z-index:99999;
+  transition:opacity 1.2s cubic-bezier(0.4,0,0.2,1),visibility 1.2s ease;
+  overflow:hidden;
+  background:#000;
+  display:flex;align-items:center;justify-content:center;
+}
+.preloader.hidden{opacity:0;visibility:hidden;pointer-events:none}
+#preloader-video{
+  width:100%;height:100%;object-fit:cover;
+}
+.preloader-title{
+  position:absolute;top:120px;left:0;right:0;z-index:3;
+  text-align:center;
+  font-family:var(--font-heading);font-size:clamp(52px,10vw,110px);font-weight:900;
+  color:#1A5F8C;
+  text-shadow:0 2px 12px rgba(26,95,140,0.4),0 0 40px rgba(26,95,140,0.2);
+  letter-spacing:6px;
+  pointer-events:none;
+  animation:preloaderTitleIn 1s 0.3s ease forwards;
+  opacity:0;transform:translateY(-20px);
+  transition:opacity 0.8s ease,transform 0.8s ease;
+}
+@keyframes preloaderTitleIn{to{opacity:1;transform:translateY(0)}}
+.preloader-title.fade-out{opacity:0;transform:translateY(-20px)}
+.preloader-skip{
+  position:absolute;bottom:40px;right:40px;z-index:3;
+}
+.preloader-skip-btn{
+  font-family:var(--font-ui);font-size:14px;font-weight:600;
+  color:rgba(255,255,255,0.7);background:rgba(255,255,255,0.1);
+  border:1px solid rgba(255,255,255,0.25);border-radius:var(--radius-full);
+  padding:10px 28px;cursor:none;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  transition:all 0.3s ease;
+}
+.preloader-skip-btn:hover{
+  color:#fff;background:rgba(255,255,255,0.2);
+  border-color:rgba(255,255,255,0.5);transform:scale(1.05);
+}
+.preloader-sound-btn svg{flex-shrink:0}
+.preloader-sound-btn:hover{
+  background:rgba(255,255,255,0.22);border-color:rgba(255,255,255,0.5);transform:scale(1.05);
+}
+.preloader-sound-btn.active{
+  color:#fff;background:rgba(74,159,229,0.35);border-color:rgba(74,159,229,0.5);
+}
+.preloader-sound-btn.active svg{display:none}
+.preloader-sound-btn.active span{display:none}
+.preloader-sound-btn.active::after{content:'♪ Звук включён';font-family:var(--font-ui);font-size:14px;font-weight:600}
+
+/* === THREE.JS CANVAS === */
+#three-canvas{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  z-index:0;pointer-events:none;opacity:0.6;
+}
+
+/* === NAVBAR === */
+.navbar{
+  position:fixed;top:0;left:0;right:0;z-index:1000;
+  padding:18px 0;transition:var(--transition);
+}
+.navbar.scrolled{
+  background:var(--bg-glass-strong);
+  backdrop-filter:blur(24px) saturate(200%);
+  -webkit-backdrop-filter:blur(24px) saturate(200%);
+  box-shadow:0 4px 40px rgba(74,159,229,0.08);
+  padding:12px 0;
+  border-bottom:1px solid rgba(74,159,229,0.08);
+}
+.navbar-inner{
+  max-width:1300px;margin:0 auto;padding:0 32px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.navbar-brand{
+  display:flex;align-items:center;gap:14px;
+  transition:var(--transition-fast);position:relative;
+  margin-right:auto;padding-right:60px;
+}
+.navbar-brand:hover{transform:scale(1.03)}
+.navbar-brand::after{
+  content:'';position:absolute;inset:-8px;
+  border-radius:var(--radius-lg);
+  background:radial-gradient(circle,rgba(74,159,229,0.15),transparent);
+  opacity:0;transition:opacity 0.3s ease;pointer-events:none;
+}
+.navbar-brand:hover::after{opacity:1}
+.navbar-logo{
+  width:50px;height:50px;border-radius:var(--radius-md);
+  overflow:hidden;box-shadow:var(--shadow-soft);
+  transition:var(--transition-bounce);
+}
+.navbar-brand:hover .navbar-logo{transform:rotate(-5deg) scale(1.05)}
+.navbar-logo img{width:100%;height:100%;object-fit:cover}
+.navbar-title{
+  font-family:var(--font-heading);font-size:24px;font-weight:700;color:var(--text-dark);
+  white-space:nowrap;
+}
+.navbar-title span{color:var(--primary);display:inline-block;transition:var(--transition-bounce)}
+.navbar-brand:hover .navbar-title span{transform:rotate(5deg) scale(1.1);color:var(--accent)}
+.navbar-menu{display:flex;align-items:center;gap:6px;list-style:none}
+.navbar-menu li{position:relative}
+.navbar-menu li a{
+  font-family:var(--font-ui);font-size:13px;font-weight:500;
+  color:var(--text-mid);padding:10px 16px;border-radius:var(--radius-full);
+  transition:all 0.3s ease;white-space:nowrap;position:relative;overflow:hidden;
+}
+.navbar-menu li a::before{
+  content:'';position:absolute;inset:0;border-radius:var(--radius-full);
+  background:var(--gradient-blue);opacity:0;
+  transform:scale(0);transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+.navbar-menu li a:hover::before{opacity:1;transform:scale(1)}
+.navbar-menu li a:hover{color:var(--text-white)}
+.navbar-menu li a span{position:relative;z-index:1}
+.navbar-menu li a.active::before{opacity:1;transform:scale(1)}
+.navbar-menu li a.active{color:var(--text-white)}
+
+.mobile-toggle{
+  display:none;width:44px;height:44px;border-radius:var(--radius-md);
+  border:none;background:var(--bg-glass);backdrop-filter:blur(10px);
+  cursor:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+}
+.mobile-toggle span{
+  display:block;width:22px;height:2px;background:var(--text-dark);
+  border-radius:2px;transition:var(--transition-fast);transform-origin:center;
+}
+.mobile-toggle.active span:nth-child(1){transform:rotate(45deg) translate(5px,6px)}
+.mobile-toggle.active span:nth-child(2){opacity:0;transform:scaleX(0)}
+.mobile-toggle.active span:nth-child(3){transform:rotate(-45deg) translate(5px,-6px)}
+
+.mobile-menu{
+  display:none;position:fixed;top:0;left:0;right:0;bottom:0;
+  background:var(--bg-glass-strong);backdrop-filter:blur(40px);
+  -webkit-backdrop-filter:blur(40px);z-index:999;
+  flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  opacity:0;visibility:hidden;transition:var(--transition);
+}
+.mobile-menu.active{opacity:1;visibility:visible;display:flex}
+.mobile-menu a{
+  font-family:var(--font-heading);font-size:22px;font-weight:600;
+  color:var(--text-dark);padding:14px 28px;border-radius:var(--radius-md);
+  transition:var(--transition-fast);
+  transform:translateY(20px);opacity:0;
+}
+.mobile-menu.active a{
+  transform:translateY(0);opacity:1;
+}
+.mobile-menu a:nth-child(1){transition-delay:0.05s}
+.mobile-menu a:nth-child(2){transition-delay:0.1s}
+.mobile-menu a:nth-child(3){transition-delay:0.15s}
+.mobile-menu a:nth-child(4){transition-delay:0.2s}
+.mobile-menu a:nth-child(5){transition-delay:0.25s}
+.mobile-menu a:nth-child(6){transition-delay:0.3s}
+.mobile-menu a:nth-child(7){transition-delay:0.35s}
+.mobile-menu a:nth-child(8){transition-delay:0.4s}
+.mobile-menu a:hover{background:rgba(74,159,229,0.1);color:var(--primary)}
+
+/* === FLOATING SHAPES (global) === */
+.floating-shapes{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.floating-shape{
+  position:absolute;border-radius:var(--radius-full);
+  filter:blur(1px);opacity:0.12;
+  animation:floatShape linear infinite;
+}
+@keyframes floatShape{
+  0%{transform:translateY(100vh) rotate(0deg) scale(0.5);opacity:0}
+  10%{opacity:0.12;transform:translateY(80vh) rotate(36deg) scale(0.7)}
+  90%{opacity:0.12;transform:translateY(-10vh) rotate(324deg) scale(1)}
+  100%{transform:translateY(-20vh) rotate(360deg) scale(0.5);opacity:0}
+}
+
+/* === HERO === */
+.hero{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;padding:120px 24px 80px;
+}
+.hero-bg{
+  position:absolute;inset:0;z-index:0;
+  background:var(--gradient-hero);
+}
+.hero-bg::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 800px 600px at 25% 30%,rgba(255,179,71,0.25),transparent),
+    radial-gradient(ellipse 500px 500px at 75% 60%,rgba(168,212,245,0.4),transparent),
+    radial-gradient(ellipse 300px 300px at 50% 80%,rgba(255,140,105,0.2),transparent);
+  animation:auroraShift 8s ease-in-out infinite alternate;
+}
+@keyframes auroraShift{
+  0%{filter:hue-rotate(0deg) brightness(1)}
+  50%{filter:hue-rotate(15deg) brightness(1.05)}
+  100%{filter:hue-rotate(-10deg) brightness(1)}
+}
+.hero-mesh{
+  position:absolute;inset:0;z-index:1;
+  background:
+    repeating-conic-gradient(rgba(255,255,255,0.03) 0% 25%,transparent 0% 50%) 50% 50%/60px 60px;
+  animation:meshMove 20s linear infinite;
+  pointer-events:none;
+}
+@keyframes meshMove{0%{transform:translate(0,0)}100%{transform:translate(60px,60px)}}
+.hero-orbs{
+  position:absolute;inset:0;z-index:1;pointer-events:none;
+}
+.hero-orb{
+  position:absolute;border-radius:var(--radius-full);
+  filter:blur(40px);mix-blend-mode:overlay;
+}
+.hero-orb:nth-child(1){
+  width:300px;height:300px;background:rgba(255,179,71,0.3);
+  top:10%;left:5%;animation:orbFloat1 6s ease-in-out infinite;
+}
+.hero-orb:nth-child(2){
+  width:200px;height:200px;background:rgba(74,159,229,0.3);
+  top:50%;right:10%;animation:orbFloat2 8s ease-in-out infinite;
+}
+.hero-orb:nth-child(3){
+  width:250px;height:250px;background:rgba(255,140,105,0.2);
+  bottom:10%;left:30%;animation:orbFloat3 7s ease-in-out infinite;
+}
+@keyframes orbFloat1{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,-20px) scale(1.1)}66%{transform:translate(-20px,15px) scale(0.95)}}
+@keyframes orbFloat2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-25px,25px) scale(1.15)}}
+@keyframes orbFloat3{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(15px,20px) scale(1.05)}66%{transform:translate(-30px,-10px) scale(0.9)}}
+
+.hero-particles{position:absolute;inset:0;z-index:2;pointer-events:none}
+.particle{
+  position:absolute;border-radius:var(--radius-full);
+  background:rgba(255,255,255,0.4);
+  animation:floatParticle linear infinite;
+}
+@keyframes floatParticle{
+  0%{transform:translateY(100vh) rotate(0deg);opacity:0}
+  10%{opacity:1}90%{opacity:1}
+  100%{transform:translateY(-10vh) rotate(720deg);opacity:0}
+}
+
+.hero-content{position:relative;z-index:3;max-width:720px;text-align:center}
+.hero-glass{
+  background:var(--bg-glass);backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  border-radius:var(--radius-xl);padding:52px;
+  border:1px solid rgba(255,255,255,0.35);
+  box-shadow:var(--shadow-card),inset 0 1px 0 rgba(255,255,255,0.4);
+  transform-style:preserve-3d;perspective:1000px;
+  position:relative;overflow:hidden;
+}
+.hero-glass::before{
+  content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+  background:conic-gradient(from 0deg,transparent,rgba(74,159,229,0.1),transparent,rgba(255,179,71,0.1),transparent);
+  animation:shimmer 6s linear infinite;
+  pointer-events:none;
+}
+@keyframes shimmer{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.hero-glass::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.1) 0%,transparent 50%,rgba(255,255,255,0.05) 100%);
+  pointer-events:none;
+}
+.hero-glass:hover{
+  box-shadow:var(--shadow-hover),inset 0 1px 0 rgba(255,255,255,0.5);
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--gradient-accent);color:var(--text-white);
+  font-family:var(--font-ui);font-size:16px;font-weight:600;
+  padding:14px 30px;border-radius:var(--radius-full);margin-bottom:28px;
+  box-shadow:0 4px 20px rgba(255,179,71,0.35);
+  animation:badgePulse 2s ease-in-out infinite;
+  position:relative;z-index:1;
+  margin-left:0;margin-right:0;
+}
+@keyframes badgePulse{0%,100%{box-shadow:0 4px 20px rgba(255,179,71,0.35)}50%{box-shadow:0 4px 30px rgba(255,179,71,0.5)}}
+.hero h1{
+  font-family:var(--font-heading);
+  font-size:clamp(26px,4.5vw,40px);font-weight:700;line-height:1.3;
+  color:var(--text-dark);margin-bottom:24px;position:relative;z-index:1;
+}
+.hero-word-blue{color:#1A5F8C}
+.hero-word-orange{
+  color:var(--accent-warm);
+  text-shadow:0 0 10px rgba(255,140,105,0.6),0 0 30px rgba(255,140,105,0.4),0 0 60px rgba(255,140,105,0.2);
+}
+.hero h1 .char{
+  display:inline-block;opacity:0;transform:translateY(30px) rotateX(-90deg);
+  animation:charReveal 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+@keyframes charReveal{to{opacity:1;transform:translateY(0) rotateX(0deg)}}
+.hero-text{
+  font-size:clamp(17px,2.4vw,22px);line-height:1.75;
+  color:var(--text-mid);font-weight:500;position:relative;z-index:1;
+  text-align:justify;
+  font-family:'Caveat',cursive;
+}
+.hero-text p{margin-bottom:10px;opacity:0;animation:fadeUp 0.8s ease forwards}
+.hero-text p:nth-child(1){animation-delay:1.5s}
+.hero-text p:nth-child(2){animation-delay:1.8s}
+.hero-text p:nth-child(3){animation-delay:2.1s}
+.hero-text p:nth-child(4){animation-delay:2.4s}
+@keyframes fadeUp{to{opacity:1;transform:translateY(0)}from{opacity:0;transform:translateY(20px)}}
+
+.hero-scroll{
+  position:absolute;bottom:30px;left:50%;transform:translateX(-50%);z-index:3;
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  color:var(--text-white);font-family:var(--font-ui);font-size:12px;font-weight:500;
+  animation:bounceDown 2s ease-in-out infinite;
+}
+.hero-scroll-icon{
+  width:28px;height:44px;border:2px solid rgba(255,255,255,0.4);
+  border-radius:14px;position:relative;
+}
+.hero-scroll-icon::before{
+  content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);
+  width:4px;height:10px;border-radius:2px;background:rgba(255,255,255,0.6);
+  animation:scrollDot 2s ease-in-out infinite;
+}
+@keyframes bounceDown{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(10px)}}
+@keyframes scrollDot{0%,100%{opacity:1;top:8px}50%{opacity:0.2;top:22px}}
+
+/* === SECTION COMMON === */
+.section{padding:110px 24px;position:relative;z-index:1}
+.section-inner{max-width:1200px;margin:0 auto}
+.section-header{text-align:center;margin-bottom:64px}
+.section-header h2{
+  font-family:var(--font-heading);font-size:clamp(28px,5vw,48px);
+  font-weight:700;color:var(--text-dark);margin-bottom:24px;line-height:1.2;
+  position:relative;display:inline-block;
+}
+.section-header h2::after{
+  content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);
+  width:60px;height:4px;border-radius:var(--radius-full);
+  background:var(--gradient-accent);
+  transition:width 0.5s cubic-bezier(0.34,1.56,0.64,1);
+}
+.section-header:hover h2::after{width:120px}
+.section-header .section-label{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--font-ui);font-size:12px;font-weight:700;
+  color:var(--primary);background:rgba(74,159,229,0.08);
+  padding:8px 18px;border-radius:var(--radius-full);margin-bottom:20px;
+  text-transform:uppercase;letter-spacing:1.5px;
+  border:1px solid rgba(74,159,229,0.12);
+  transition:all 0.3s ease;
+  display:block;width:fit-content;margin-left:auto;margin-right:auto;
+}
+.section-header p{font-size:18px;color:var(--text-light);max-width:620px;margin:20px auto 0;line-height:1.6}
+.section-label{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--font-ui);font-size:12px;font-weight:700;
+  color:var(--primary);background:rgba(74,159,229,0.08);
+  padding:8px 18px;border-radius:var(--radius-full);margin-bottom:14px;
+  text-transform:uppercase;letter-spacing:1.5px;
+  border:1px solid rgba(74,159,229,0.12);
+  transition:all 0.3s ease;
+}
+.section-label:hover{background:rgba(74,159,229,0.15);transform:scale(1.05)}
+
+/* === ABOUT === */
+.about{background:var(--bg-white);position:relative;overflow:hidden}
+.about::before{
+  content:'';position:absolute;top:-200px;right:-200px;
+  width:500px;height:500px;border-radius:var(--radius-full);
+  background:radial-gradient(circle,rgba(74,159,229,0.06),transparent);
+  pointer-events:none;
+}
+.about::after{
+  content:'';position:absolute;bottom:-150px;left:-150px;
+  width:400px;height:400px;border-radius:var(--radius-full);
+  background:radial-gradient(circle,rgba(255,179,71,0.05),transparent);
+  pointer-events:none;
+}
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center}
+.about-visual{position:relative;perspective:1200px}
+.about-3d-card{
+  border-radius:var(--radius-lg);overflow:hidden;
+  box-shadow:var(--shadow-card);transform-style:preserve-3d;
+  transition:transform 0.6s cubic-bezier(0.34,1.56,0.64,1);
+  position:relative;
+}
+.about-3d-card::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(74,159,229,0.1) 0%,transparent 50%);
+  pointer-events:none;
+}
+.about-3d-card:hover{transform:rotateY(-8deg) rotateX(4deg) scale(1.03);box-shadow:var(--shadow-hover)}
+.about-3d-card img{width:100%;height:420px;object-fit:cover;border-radius:var(--radius-lg)}
+.about-floating-badge{
+  position:absolute;top:-20px;right:-20px;z-index:2;
+  width:90px;height:90px;border-radius:var(--radius-full);
+  background:var(--gradient-accent);
+  display:flex;align-items:center;justify-content:center;
+  font-size:40px;box-shadow:0 10px 40px rgba(255,179,71,0.4);
+  animation:floatBadge 3s ease-in-out infinite;
+}
+@keyframes floatBadge{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-10px) rotate(5deg)}}
+
+.about-content h2{
+  font-family:var(--font-heading);font-size:clamp(28px,4vw,42px);
+  font-weight:700;color:var(--text-dark);margin-bottom:24px;line-height:1.2;
+}
+.about-content .about-desc{
+  font-size:17px;line-height:1.7;color:var(--text-mid);margin-bottom:30px;
+}
+.about-list{display:grid;grid-template-columns:1fr 1fr;gap:12px;list-style:none}
+.about-list li{
+  display:flex;align-items:center;gap:12px;
+  font-size:15px;font-weight:500;color:var(--text-mid);
+  padding:14px 18px;background:var(--bg-soft);
+  border-radius:var(--radius-md);transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  border:1px solid transparent;
+}
+.about-list li::before{
+  content:'';flex-shrink:0;width:10px;height:10px;
+  border-radius:var(--radius-full);
+  background:var(--gradient-blue);
+  box-shadow:0 2px 8px rgba(74,159,229,0.3);
+  transition:transform 0.3s ease;
+}
+.about-list li:hover{
+  background:rgba(74,159,229,0.08);transform:translateX(6px) scale(1.02);
+  border-color:rgba(74,159,229,0.15);
+}
+.about-list li:hover::before{transform:scale(1.3) rotate(90deg)}
+
+/* === WHAT WE DO === */
+.whatwedo{background:var(--bg-soft);position:relative;overflow:hidden}
+.whatwedo::before{
+  content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:800px;height:800px;border-radius:var(--radius-full);
+  background:radial-gradient(circle,rgba(74,159,229,0.04),transparent);
+  pointer-events:none;
+}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:28px}
+.card-3d{
+  background:var(--bg-white);border-radius:var(--radius-lg);
+  padding:36px;box-shadow:var(--shadow-soft);
+  border:1px solid rgba(74,159,229,0.06);
+  transform-style:preserve-3d;transition:all 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  position:relative;overflow:hidden;
+}
+.card-3d::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:4px;
+  background:var(--gradient-blue);border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+  transform:scaleX(0);transform-origin:left;transition:transform 0.5s cubic-bezier(0.34,1.56,0.64,1);
+}
+.card-3d::after{
+  content:'';position:absolute;bottom:-50%;right:-50%;width:100%;height:100%;
+  border-radius:var(--radius-full);
+  background:radial-gradient(circle,rgba(74,159,229,0.05),transparent);
+  pointer-events:none;transition:all 0.5s ease;
+}
+.card-3d:hover::before{transform:scaleX(1)}
+.card-3d:hover{
+  transform:translateY(-12px) rotateX(3deg) rotateY(-2deg);
+  box-shadow:var(--shadow-card);
+}
+.card-3d:hover::after{transform:scale(1.5)}
+.card-3d-icon{
+  width:64px;height:64px;border-radius:var(--radius-md);
+  display:flex;align-items:center;justify-content:center;
+  font-size:30px;margin-bottom:24px;
+  background:linear-gradient(135deg,rgba(74,159,229,0.08),rgba(168,212,245,0.15));
+  transition:all 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  border:1px solid rgba(74,159,229,0.08);
+}
+.card-3d:hover .card-3d-icon{
+  background:var(--gradient-blue);transform:scale(1.15) rotate(-8deg);
+  box-shadow:0 8px 25px rgba(74,159,229,0.3);
+  border-color:transparent;
+}
+.card-3d h3{
+  font-family:var(--font-heading);font-size:20px;font-weight:700;
+  color:var(--text-dark);margin-bottom:14px;
+  transition:color 0.3s ease;
+}
+.card-3d:hover h3{color:var(--primary)}
+.card-3d p{font-size:15px;line-height:1.7;color:var(--text-light)}
+
+/* === SUPPORT === */
+.support{background:var(--bg-white);overflow:hidden;position:relative}
+.support::before{
+  content:'';position:absolute;top:0;left:0;bottom:0;width:40%;
+  background:linear-gradient(135deg,rgba(74,159,229,0.03),transparent);
+  pointer-events:none;
+}
+.support-grid{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center}
+.support-content h2{
+  font-family:var(--font-heading);font-size:clamp(28px,4vw,38px);
+  font-weight:700;color:var(--text-dark);margin-bottom:22px;line-height:1.2;
+}
+.support-content .support-desc{font-size:16px;line-height:1.75;color:var(--text-mid);margin-bottom:24px}
+.support-items{display:flex;flex-direction:column;gap:14px}
+.support-item{
+  display:flex;align-items:center;gap:16px;padding:18px;
+  background:var(--bg-soft);border-radius:var(--radius-md);
+  transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  border:1px solid transparent;
+}
+.support-item-icon{
+  font-size:26px;flex-shrink:0;width:52px;height:52px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg-white);border-radius:var(--radius-md);
+  box-shadow:var(--shadow-soft);transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  border:1px solid rgba(74,159,229,0.08);
+}
+.support-item:hover{
+  background:rgba(74,159,229,0.06);transform:translateX(8px) scale(1.02);
+  border-color:rgba(74,159,229,0.1);
+}
+.support-item:hover .support-item-icon{
+  transform:scale(1.1) rotate(-5deg);
+  box-shadow:0 8px 25px rgba(74,159,229,0.2);
+}
+.support-item p{font-size:15px;line-height:1.5;color:var(--text-mid);font-weight:500}
+
+.magnetic-btn{
+  display:inline-flex;align-items:center;gap:10px;
+  margin-top:24px;padding:16px 36px;
+  background:var(--gradient-blue);color:var(--text-white);
+  font-family:var(--font-ui);font-size:15px;font-weight:600;
+  border-radius:var(--radius-full);border:none;
+  box-shadow:0 8px 30px rgba(74,159,229,0.35);
+  transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  position:relative;overflow:hidden;
+}
+.magnetic-btn::before{
+  content:'';position:absolute;inset:0;
+  background:var(--gradient-accent);opacity:0;
+  transition:opacity 0.4s ease;border-radius:var(--radius-full);
+}
+.magnetic-btn:hover::before{opacity:1}
+.magnetic-btn span{position:relative;z-index:1}
+.magnetic-btn:hover{
+  transform:translateY(-4px) scale(1.05);
+  box-shadow:0 16px 45px rgba(74,159,229,0.4);
+}
+
+.support-visual{perspective:1200px}
+.support-img-wrap{
+  border-radius:var(--radius-lg);overflow:hidden;
+  box-shadow:var(--shadow-card);transform-style:preserve-3d;
+  transition:all 0.6s cubic-bezier(0.34,1.56,0.64,1);
+  position:relative;
+}
+.support-img-wrap::before{
+  content:'';position:absolute;inset:-2px;
+  background:var(--gradient-aurora);background-size:300% 300%;
+  border-radius:var(--radius-lg);z-index:-1;
+  animation:gradientShift 4s ease infinite;
+  opacity:0;transition:opacity 0.4s ease;
+}
+.support-img-wrap:hover::before{opacity:1}
+.support-img-wrap:hover{transform:rotateY(6deg) rotateX(-3deg) scale(1.03);box-shadow:var(--shadow-hover)}
+.support-img-wrap img{width:100%;height:auto;object-fit:contain;border-radius:var(--radius-lg)}
+
+/* === MATERIALS === */
+.materials{background:var(--bg-soft);position:relative;overflow:hidden}
+.materials-header-strip{
+  background:var(--gradient-blue);border-radius:var(--radius-xl);
+  padding:48px 56px;margin-bottom:52px;text-align:center;
+  position:relative;overflow:hidden;
+}
+.materials-header-strip::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 30% 50%,rgba(255,255,255,0.12),transparent);
+}
+.materials-header-strip::after{
+  content:'';position:absolute;inset:0;
+  background:repeating-conic-gradient(rgba(255,255,255,0.02) 0% 25%,transparent 0% 50%) 50% 50%/40px 40px;
+  animation:meshMove 15s linear infinite;
+}
+.materials-header-strip h2{
+  font-family:var(--font-heading);font-size:clamp(28px,4vw,42px);
+  font-weight:700;color:var(--text-white);margin-bottom:14px;position:relative;
+}
+.materials-header-strip p{
+  font-size:17px;line-height:1.65;color:rgba(255,255,255,0.85);
+  max-width:620px;margin:0 auto;position:relative;
+}
+.materials-cards{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.material-card{
+  border-radius:var(--radius-lg);overflow:hidden;
+  box-shadow:var(--shadow-card);background:var(--bg-white);
+  transform-style:preserve-3d;transition:all 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  position:relative;
+}
+.material-card::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(74,159,229,0.05),transparent);
+  pointer-events:none;
+}
+.material-card:hover{
+  transform:translateY(-10px) rotateX(2deg) rotateY(-3deg) scale(1.02);
+  box-shadow:var(--shadow-hover);
+}
+.material-card-img{height:340px;overflow:hidden;position:relative}
+.material-card-img img{width:100%;height:100%;object-fit:cover;transition:transform 0.8s cubic-bezier(0.34,1.56,0.64,1)}
+.material-card:hover .material-card-img img{transform:scale(1.08)}
+.material-card-overlay{
+  position:absolute;bottom:0;left:0;right:0;padding:36px;
+  background:linear-gradient(transparent,rgba(10,30,51,0.85));
+  color:var(--text-white);
+}
+.material-card-overlay h3{
+  font-family:var(--font-heading);font-size:22px;font-weight:700;
+  margin-bottom:10px;
+}
+.material-card-overlay p{font-size:14px;line-height:1.65;color:rgba(255,255,255,0.85)}
+
+/* === INSTITUTIONS === */
+.institutions{background:var(--bg-white);position:relative;overflow:hidden}
+.institutions::before{
+  content:'';position:absolute;top:50%;right:-10%;transform:translateY(-50%);
+  width:400px;height:400px;border-radius:var(--radius-full);
+  background:radial-gradient(circle,rgba(74,159,229,0.05),transparent);
+}
+.institutions-grid{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center}
+.institutions-img-wrap{
+  border-radius:var(--radius-lg);overflow:hidden;
+  box-shadow:var(--shadow-card);transform-style:preserve-3d;
+  transition:all 0.6s cubic-bezier(0.34,1.56,0.64,1);
+  perspective:1200px;position:relative;
+}
+.institutions-img-wrap::before{
+  content:'';position:absolute;inset:-3px;border-radius:calc(var(--radius-lg) + 3px);
+  background:var(--gradient-accent);opacity:0;
+  transition:opacity 0.4s ease;z-index:-1;
+}
+.institutions-img-wrap:hover::before{opacity:1}
+.institutions-img-wrap:hover{transform:rotateY(-7deg) rotateX(3deg) scale(1.03);box-shadow:var(--shadow-hover)}
+.institutions-img-wrap img{width:100%;height:480px;object-fit:cover;border-radius:var(--radius-lg)}
+.institutions-content h2{
+  font-family:var(--font-heading);font-size:clamp(26px,4vw,36px);
+  font-weight:700;color:var(--text-dark);margin-bottom:22px;line-height:1.2;
+}
+.institutions-content p{font-size:16px;line-height:1.75;color:var(--text-mid);margin-bottom:18px}
+
+/* === KINDERGARTEN === */
+.kindergarten{background:var(--bg-soft);position:relative;overflow:hidden}
+.kindergarten::before{
+  content:'';position:absolute;top:-30%;left:-10%;width:600px;height:600px;
+  border-radius:var(--radius-full);
+  background:radial-gradient(circle,rgba(74,159,229,0.06),transparent);
+}
+.kindergarten::after{
+  content:'';position:absolute;bottom:-20%;right:-5%;width:400px;height:400px;
+  border-radius:var(--radius-full);
+  background:radial-gradient(circle,rgba(255,179,71,0.05),transparent);
+}
+.kindergarten-grid{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center}
+.kindergarten-content{position:relative;z-index:1}
+.kindergarten-content h2{
+  font-family:var(--font-heading);font-size:clamp(26px,4vw,36px);
+  font-weight:700;color:var(--text-dark);margin-bottom:22px;line-height:1.2;
+}
+.kindergarten-content p{font-size:16px;line-height:1.75;color:var(--text-mid);margin-bottom:18px}
+.kindergarten-img-wrap{
+  border-radius:var(--radius-lg);overflow:hidden;
+  box-shadow:var(--shadow-card);transform-style:preserve-3d;
+  transition:all 0.6s cubic-bezier(0.34,1.56,0.64,1);
+  perspective:1200px;position:relative;z-index:1;
+}
+.kindergarten-img-wrap::before{
+  content:'';position:absolute;inset:-3px;border-radius:calc(var(--radius-lg) + 3px);
+  background:var(--gradient-aurora);background-size:300% 300%;
+  animation:gradientShift 4s ease infinite;opacity:0;
+  transition:opacity 0.4s ease;z-index:-1;
+}
+.kindergarten-img-wrap:hover::before{opacity:1}
+.kindergarten-img-wrap:hover{transform:rotateY(7deg) rotateX(-2deg) scale(1.03);box-shadow:var(--shadow-hover)}
+.kindergarten-img-wrap img{width:100%;height:520px;object-fit:cover;border-radius:var(--radius-lg)}
+
+/* === TEAM === */
+.team{background:var(--bg-white);position:relative;overflow:hidden}
+.team-strip{
+  background:var(--gradient-blue);border-radius:var(--radius-xl);
+  padding:44px 56px;margin-bottom:52px;text-align:center;
+  position:relative;overflow:hidden;
+}
+.team-strip::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 70% 50%,rgba(255,255,255,0.12),transparent);
+}
+.team-strip::after{
+  content:'';position:absolute;inset:0;
+  background:repeating-conic-gradient(rgba(255,255,255,0.02) 0% 25%,transparent 0% 50%) 50% 50%/40px 40px;
+  animation:meshMove 15s linear infinite;
+}
+.team-strip h2{
+  font-family:var(--font-heading);font-size:clamp(28px,4vw,42px);
+  font-weight:700;color:var(--text-white);margin-bottom:10px;position:relative;
+}
+.team-strip p{font-size:17px;color:rgba(255,255,255,0.85);position:relative}
+.team-cards{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+.team-card{
+  background:var(--bg-white);border-radius:var(--radius-lg);
+  padding:44px;box-shadow:var(--shadow-soft);
+  border:1px solid rgba(74,159,229,0.06);
+  text-align:center;transform-style:preserve-3d;
+  transition:all 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  position:relative;overflow:hidden;
+}
+.team-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:100%;
+  background:linear-gradient(180deg,rgba(74,159,229,0.03),transparent 40%);
+  pointer-events:none;
+}
+.team-card:hover{
+  transform:translateY(-10px) rotateX(3deg) rotateY(2deg);
+  box-shadow:var(--shadow-card);
+}
+.team-card-photo{
+  width:150px;height:150px;border-radius:var(--radius-full);
+  margin:0 auto 24px;overflow:hidden;
+  border:4px solid var(--primary-light);
+  box-shadow:0 10px 35px rgba(74,159,229,0.2);
+  transition:all 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  position:relative;
+}
+.team-card-photo::after{
+  content:'';position:absolute;inset:-4px;border-radius:var(--radius-full);
+  background:var(--gradient-aurora);background-size:300% 300%;
+  animation:gradientShift 4s ease infinite;
+  z-index:-1;opacity:0;transition:opacity 0.3s ease;
+}
+.team-card:hover .team-card-photo{
+  transform:scale(1.08) rotate(3deg);border-color:var(--accent);
+}
+.team-card:hover .team-card-photo::after{opacity:1}
+.team-card-photo img{width:100%;height:100%;object-fit:cover}
+.team-card h3{
+  font-family:var(--font-heading);font-size:26px;font-weight:700;
+  color:var(--text-dark);margin-bottom:10px;
+}
+.team-card .team-role{
+  font-family:var(--font-ui);font-size:13px;font-weight:700;
+  color:var(--primary);text-transform:uppercase;letter-spacing:1px;margin-bottom:24px;
+  background:rgba(74,159,229,0.08);padding:6px 16px;border-radius:var(--radius-full);
+  display:inline-block;
+}
+.team-card ul{text-align:left;list-style:none;display:flex;flex-direction:column;gap:10px}
+.team-card ul li{
+  font-size:14px;line-height:1.5;color:var(--text-mid);
+  padding:8px 12px 8px 24px;position:relative;
+  border-radius:var(--radius-sm);transition:all 0.3s ease;
+}
+.team-card ul li::before{
+  content:'';position:absolute;left:8px;top:14px;
+  width:7px;height:7px;border-radius:var(--radius-full);
+  background:var(--gradient-blue);box-shadow:0 2px 6px rgba(74,159,229,0.3);
+  transition:transform 0.3s ease;
+}
+.team-card ul li:hover{background:rgba(74,159,229,0.04);transform:translateX(4px)}
+.team-card ul li:hover::before{transform:scale(1.3) rotate(45deg)}
+
+/* === SOCIAL === */
+.social{background:var(--gradient-blue);position:relative;overflow:hidden;padding:100px 24px}
+.social::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 20% 80%,rgba(255,179,71,0.12),transparent);
+}
+.social::after{
+  content:'';position:absolute;inset:0;
+  background:repeating-conic-gradient(rgba(255,255,255,0.015) 0% 25%,transparent 0% 50%) 50% 50%/50px 50px;
+  animation:meshMove 20s linear infinite;
+}
+.social-inner{position:relative;z-index:1;text-align:center}
+.social h2{
+  font-family:var(--font-heading);font-size:clamp(28px,5vw,48px);
+  font-weight:700;color:var(--text-white);margin-bottom:52px;
+}
+.social-carousel{
+  display:flex;align-items:center;justify-content:center;
+  gap:20px;perspective:800px;position:relative;
+  padding:40px 0;
+}
+.social-orb{
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  width:170px;min-height:180px;padding:28px 16px;
+  background:var(--bg-glass);backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-radius:var(--radius-xl);
+  border:1px solid rgba(255,255,255,0.2);
+  text-decoration:none;
+  transform-style:preserve-3d;
+  position:relative;overflow:hidden;
+  transition:all 0.5s cubic-bezier(0.34,1.56,0.64,1);
+}
+.social-orb::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.15),transparent 60%);
+  pointer-events:none;
+}
+.social-orb::after{
+  content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+  background:conic-gradient(from 0deg,transparent,rgba(255,255,255,0.06),transparent,rgba(255,255,255,0.03),transparent);
+  animation:shimmer 10s linear infinite;pointer-events:none;
+}
+.social-orb:hover{
+  transform:translateY(-10px) scale(1.08)!important;
+  background:rgba(255,255,255,0.35);
+  box-shadow:0 30px 60px rgba(0,0,0,0.15),0 0 40px rgba(255,255,255,0.1);
+  border-color:rgba(255,255,255,0.4);
+}
+.social-orb-icon{
+  width:64px;height:64px;border-radius:var(--radius-full);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+  transition:all 0.5s cubic-bezier(0.34,1.56,0.64,1);
+}
+.social-orb-icon svg{
+  width:32px;height:32px;
+  transition:all 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  filter:drop-shadow(0 2px 6px rgba(0,0,0,0.1));
+}
+.social-orb-icon::after{
+  content:'';position:absolute;inset:-4px;border-radius:var(--radius-full);
+  background:linear-gradient(135deg,rgba(255,255,255,0.2),rgba(255,255,255,0.05));
+  opacity:0;transition:opacity 0.3s ease;z-index:-1;
+}
+.social-orb:hover .social-orb-icon{transform:scale(1.2) rotate(8deg)}
+.social-orb:hover .social-orb-icon::after{opacity:1}
+.social-orb:hover .social-orb-icon svg{
+  transform:scale(1.15);
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+}
+.social-orb-icon--vk svg{stroke-linecap:round;stroke-linejoin:round}
+.social-orb-icon--max{background:linear-gradient(135deg,rgba(42,42,42,0.06),rgba(42,42,42,0.02))}
+.social-orb-icon--tg svg{}
+.social-orb-icon--mail svg{}
+.social-orb h3{
+  font-family:var(--font-heading);font-size:15px;font-weight:700;
+  color:#2A2A2A;margin:0;white-space:nowrap;
+}
+.social-orb p{
+  font-size:12px;color:#4A4A4A;
+  margin:0;line-height:1.3;
+}
+.social-orb-glow{
+  position:absolute;width:120px;height:120px;
+  border-radius:var(--radius-full);
+  filter:blur(30px);opacity:0;
+  transition:opacity 0.4s ease;
+  pointer-events:none;z-index:-1;
+}
+.social-orb:hover .social-orb-glow{opacity:0.5}
+.social-orb:nth-child(1) .social-orb-glow{background:#5B9BD5;top:-20px;left:-20px}
+.social-orb:nth-child(2) .social-orb-glow{background:#FFB347;bottom:-20px;right:-20px}
+.social-orb:nth-child(3) .social-orb-glow{background:#34AADF;top:-20px;right:-20px}
+.social-orb:nth-child(4) .social-orb-glow{background:#FF8C69;bottom:-20px;left:-20px}
+
+.social-carousel-enter .social-orb{
+  opacity:0;transform:translateY(60px) rotateX(20deg) scale(0.7);
+}
+.social-carousel-enter.visible .social-orb{
+  opacity:1;transform:translateY(0) rotateX(0deg) scale(1);
+}
+.social-carousel-enter.visible .social-orb:nth-child(1){transition:all 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.1s}
+.social-carousel-enter.visible .social-orb:nth-child(2){transition:all 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.25s}
+.social-carousel-enter.visible .social-orb:nth-child(3){transition:all 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.4s}
+.social-carousel-enter.visible .social-orb:nth-child(4){transition:all 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.55s}
+
+/* === CONTACTS / FEEDBACK FORM === */
+.contacts{background:var(--bg-white);position:relative;overflow:hidden}
+.contacts::before{
+  content:'';position:absolute;top:-30%;right:-10%;
+  width:500px;height:500px;border-radius:var(--radius-full);
+  background:radial-gradient(circle,rgba(74,159,229,0.05),transparent);
+  pointer-events:none;
+}
+.feedback-form{
+  max-width:680px;margin:0 auto;position:relative;z-index:1;
+  background:var(--bg-soft);border-radius:var(--radius-xl);
+  padding:44px;border:1px solid rgba(74,159,229,0.08);
+  box-shadow:var(--shadow-soft);
+}
+.feedback-row{
+  display:grid;grid-template-columns:1fr 1fr;gap:20px;
+  margin-bottom:20px;
+}
+.feedback-field{display:flex;flex-direction:column;gap:8px}
+.feedback-field--full{margin-bottom:20px}
+.feedback-field label{
+  font-family:var(--font-ui);font-size:13px;font-weight:600;
+  color:var(--text-mid);text-transform:uppercase;letter-spacing:0.5px;
+}
+.feedback-field input,
+.feedback-field textarea{
+  font-family:var(--font-body);font-size:15px;color:var(--text-dark);
+  padding:14px 18px;border-radius:var(--radius-md);
+  border:2px solid rgba(74,159,229,0.12);background:var(--bg-white);
+  outline:none;transition:all 0.3s ease;
+  resize:vertical;
+}
+.feedback-field input::placeholder,
+.feedback-field textarea::placeholder{
+  color:var(--text-light);opacity:0.6;
+}
+.feedback-field input:focus,
+.feedback-field textarea:focus{
+  border-color:var(--primary);
+  box-shadow:0 0 0 4px rgba(74,159,229,0.1),var(--shadow-soft);
+  transform:translateY(-2px);
+}
+.feedback-btn{
+  width:auto;padding:16px 48px;margin-top:8px;
+  background:var(--gradient-blue);color:var(--text-white);
+  font-family:var(--font-heading);font-size:17px;font-weight:700;
+  border:none;border-radius:var(--radius-full);
+  box-shadow:0 8px 30px rgba(74,159,229,0.35);
+  transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  position:relative;overflow:hidden;
+  display:block;margin-left:auto;margin-right:auto;
+}
+.feedback-btn::before{
+  content:'';position:absolute;inset:0;
+  background:var(--gradient-accent);opacity:0;
+  transition:opacity 0.4s ease;border-radius:var(--radius-full);
+}
+.feedback-btn:hover::before{opacity:1}
+.feedback-btn span{position:relative;z-index:1}
+.feedback-btn:hover{
+  transform:translateY(-3px) scale(1.02);
+  box-shadow:0 16px 45px rgba(74,159,229,0.4);
+}
+.feedback-success{
+  display:none;text-align:center;padding:40px;
+  animation:fadeUp 0.6s ease;
+}
+.feedback-success.active{display:block}
+.feedback-success h3{
+  font-family:var(--font-heading);font-size:24px;font-weight:700;
+  color:var(--primary);margin-bottom:12px;
+}
+.feedback-success p{font-size:16px;color:var(--text-mid)}
+
+/* === ADMIN PANEL === */
+.admin-overlay{
+  display:none;position:fixed;inset:0;z-index:100000;
+  background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  align-items:center;justify-content:center;
+}
+.admin-overlay.active{display:flex}
+.admin-panel{
+  background:var(--bg-white);border-radius:var(--radius-lg);
+  width:95%;max-width:1000px;max-height:80vh;display:flex;flex-direction:column;
+  box-shadow:0 30px 80px rgba(0,0,0,0.3);overflow:hidden;
+}
+.admin-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:24px 32px;border-bottom:1px solid rgba(74,159,229,0.1);
+  background:var(--gradient-blue);color:var(--text-white);
+}
+.admin-header h2{font-family:var(--font-heading);font-size:22px;font-weight:700;margin:0}
+.admin-close{
+  background:none;border:none;color:var(--text-white);font-size:28px;
+  cursor:pointer;line-height:1;padding:0 4px;transition:transform 0.2s ease;
+}
+.admin-close:hover{transform:scale(1.2)}
+.admin-body{
+  flex:1;overflow-y:auto;padding:24px 32px;
+  display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;
+}
+.admin-section{min-width:0}
+.admin-section:first-child{border-bottom:none;padding-bottom:0}
+.admin-section-title{
+  font-family:var(--font-heading);font-size:16px;font-weight:700;
+  color:var(--primary);margin-bottom:16px;padding:10px 20px;
+  background:rgba(74,159,229,0.06);border-radius:var(--radius-sm);
+  border-left:4px solid var(--primary);text-align:center;
+  min-height:44px;display:flex;align-items:center;justify-content:center;
+  white-space:nowrap;
+}
+.admin-section-title--partner{
+  color:var(--accent);background:rgba(255,179,71,0.06);
+  border-left-color:var(--accent);
+}
+.admin-section-empty{color:var(--text-light);text-align:center;font-size:14px;padding:16px 0;margin:0}
+.admin-card{
+  background:var(--bg-soft);border-radius:var(--radius-md);
+  padding:20px;margin-bottom:16px;border:1px solid rgba(74,159,229,0.08);
+  position:relative;
+}
+.admin-card-header{
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-right:90px;
+}
+.admin-card-name{font-family:var(--font-heading);font-size:17px;font-weight:700;color:var(--text-dark)}
+.admin-card-date{font-size:12px;color:var(--text-light)}
+.admin-card-info{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.admin-card-info p{font-size:13px;color:var(--text-mid);margin:0}
+.admin-card-info p strong{color:var(--text-dark);font-weight:600}
+.admin-card-msg{font-size:14px;color:var(--text-mid);line-height:1.6;background:var(--bg-white);padding:12px 16px;border-radius:var(--radius-sm);margin:0;padding-right:90px}
+.admin-card-del{
+  position:absolute;top:14px;right:14px;
+  background:rgba(255,107,107,0.08);border:1px solid rgba(255,107,107,0.2);
+  color:var(--accent-coral);font-family:var(--font-ui);font-size:12px;font-weight:600;
+  padding:6px 16px;border-radius:var(--radius-full);cursor:pointer;
+  transition:all 0.2s ease;
+}
+.admin-card-del:hover{background:rgba(255,107,107,0.18);border-color:rgba(255,107,107,0.4)}
+
+/* === FEEDBACK CHOICE === */
+.feedback-choice{
+  display:none;position:fixed;inset:0;z-index:10000;
+  background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  align-items:center;justify-content:center;
+}
+.feedback-choice.active{display:flex}
+.feedback-choice-inner{
+  background:var(--bg-white);border-radius:var(--radius-xl);
+  padding:48px;max-width:420px;width:90%;text-align:center;
+  box-shadow:0 30px 80px rgba(0,0,0,0.2);
+}
+.feedback-choice-inner h3{
+  font-family:var(--font-heading);font-size:22px;font-weight:700;
+  color:var(--text-dark);margin-bottom:32px;
+}
+.feedback-choice-btn{
+  display:block;width:100%;padding:18px;margin-bottom:14px;
+  border:none;border-radius:var(--radius-md);font-family:var(--font-heading);
+  font-size:16px;font-weight:700;cursor:pointer;
+  transition:all 0.3s ease;position:relative;overflow:hidden;
+}
+.feedback-choice-btn--regular{
+  background:var(--gradient-blue);color:var(--text-white);
+  box-shadow:0 8px 30px rgba(74,159,229,0.3);
+}
+.feedback-choice-btn--regular:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 16px 45px rgba(74,159,229,0.4)}
+.feedback-choice-btn--partner{
+  background:var(--gradient-accent);color:var(--text-white);
+  box-shadow:0 8px 30px rgba(255,179,71,0.3);
+}
+.feedback-choice-btn--partner:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 16px 45px rgba(255,179,71,0.4)}
+.feedback-choice-cancel{
+  background:none;border:none;color:var(--text-light);font-size:14px;
+  cursor:pointer;padding:8px 16px;margin-top:8px;transition:color 0.2s ease;
+}
+.feedback-choice-cancel:hover{color:var(--text-dark)}
+
+/* === INFO BANNER === */
+.info-banner{
+  display:none;position:fixed;inset:0;z-index:99998;
+  background:rgba(0,0,0,0);backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);
+  align-items:center;justify-content:center;
+  transition:background 0.8s ease,backdrop-filter 0.8s ease,-webkit-backdrop-filter 0.8s ease;
+}
+.info-banner.active{display:flex;background:rgba(0,0,0,0.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.info-banner-inner{
+  background:var(--bg-white);border-radius:var(--radius-xl);
+  padding:52px;max-width:640px;width:90%;text-align:center;
+  box-shadow:0 30px 80px rgba(0,0,0,0.25);position:relative;
+  opacity:0;transform:translateY(40px) scale(0.95);
+  transition:opacity 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.2s,transform 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.2s;
+}
+.info-banner.active .info-banner-inner{opacity:1;transform:translateY(0) scale(1)}
+.info-banner-close{
+  position:absolute;top:16px;right:20px;background:none;border:none;
+  color:var(--text-light);font-size:28px;cursor:pointer;line-height:1;
+  transition:color 0.2s ease,transform 0.2s ease;
+}
+.info-banner-close:hover{color:var(--text-dark);transform:scale(1.1)}
+.info-banner-inner h2{
+  font-family:var(--font-heading);font-size:clamp(24px,4vw,32px);font-weight:700;
+  color:var(--primary-dark);margin-bottom:20px;line-height:1.3;
+}
+.info-banner-inner p{
+  font-size:16px;line-height:1.75;color:var(--text-mid);margin-bottom:16px;
+  text-align:left;
+}
+.info-banner-btn{
+  display:inline-block;margin-top:12px;padding:16px 44px;
+  background:var(--gradient-accent);color:var(--text-white);
+  font-family:var(--font-heading);font-size:17px;font-weight:700;
+  border-radius:var(--radius-full);border:none;text-decoration:none;
+  box-shadow:0 8px 30px rgba(255,179,71,0.35);
+  transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+.info-banner-btn:hover{
+  transform:translateY(-4px) scale(1.05);
+  box-shadow:0 16px 45px rgba(255,179,71,0.45);
+}
+
+/* === FOOTER === */
+.footer{
+  background:var(--text-dark);padding:48px 24px;text-align:center;
+  position:relative;overflow:hidden;
+}
+.footer::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 0%,rgba(74,159,229,0.08),transparent);
+}
+.footer-inner{max-width:1200px;margin:0 auto;position:relative;z-index:1}
+.footer-logo{display:inline-flex;align-items:center;gap:12px;margin-bottom:18px}
+.footer-logo-icon{width:40px;height:40px;border-radius:var(--radius-sm);overflow:hidden}
+.footer-logo-icon img{width:100%;height:100%;object-fit:cover}
+.footer-logo span{font-family:var(--font-heading);font-size:22px;font-weight:700;color:var(--text-white)}
+.footer-logo span em{color:var(--primary-light);font-style:normal}
+.footer-copy{font-size:13px;color:rgba(255,255,255,0.35)}
+
+/* === ANIMATIONS === */
+.reveal{opacity:0;transform:translateY(50px) scale(0.95);transition:opacity 0.9s ease,transform 0.9s cubic-bezier(0.34,1.56,0.64,1)}
+.reveal.visible{opacity:1;transform:translateY(0) scale(1)}
+.reveal-left{opacity:0;transform:translateX(-60px) rotateY(10deg);transition:opacity 0.9s ease,transform 0.9s cubic-bezier(0.34,1.56,0.64,1)}
+.reveal-left.visible{opacity:1;transform:translateX(0) rotateY(0deg)}
+.reveal-right{opacity:0;transform:translateX(60px) rotateY(-10deg);transition:opacity 0.9s ease,transform 0.9s cubic-bezier(0.34,1.56,0.64,1)}
+.reveal-right.visible{opacity:1;transform:translateX(0) rotateY(0deg)}
+.reveal-scale{opacity:0;transform:scale(0.8) rotateX(10deg);transition:opacity 0.9s ease,transform 0.9s cubic-bezier(0.34,1.56,0.64,1)}
+.reveal-scale.visible{opacity:1;transform:scale(1) rotateX(0deg)}
+
+.stagger{opacity:0;transform:translateY(30px);transition:opacity 0.6s ease,transform 0.6s cubic-bezier(0.34,1.56,0.64,1)}
+.stagger.visible{opacity:1;transform:translateY(0)}
+
+/* === RESPONSIVE === */
+@media(max-width:1024px){
+  .navbar-menu{display:none}
+  .mobile-toggle{display:flex}
+  .about-grid,.support-grid,.institutions-grid,.kindergarten-grid{grid-template-columns:1fr;gap:40px}
+  .team-cards{grid-template-columns:1fr}
+  .materials-cards{grid-template-columns:1fr}
+  .social-carousel{flex-wrap:wrap;gap:16px}
+  .social-orb{width:calc(50% - 8px)}
+  .cursor-droplet,.cursor-droplet-trail{display:none}
+  body{cursor:auto}a{cursor:pointer}button{cursor:pointer}
+}
+@media(max-width:640px){
+  .section{padding:70px 16px}
+  .hero{padding:100px 16px 60px}
+  .hero-glass{padding:28px 24px}
+  .about-list{grid-template-columns:1fr}
+  .social-carousel{flex-wrap:wrap;gap:12px}
+  .social-orb{width:100%}
+  .feedback-row{grid-template-columns:1fr}
+  .feedback-form{padding:28px}
+  .materials-header-strip,.team-strip{padding:28px 24px}
+  .team-card{padding:28px}
+}
+</style>
+</head>
+<body>
+
+<!-- КАПЛЯ CURSOR -->
+<div class="cursor-droplet" id="cursorDroplet"></div>
+<div class="cursor-droplet-trail" id="cursorTrail1"></div>
+<div class="cursor-droplet-trail" id="cursorTrail2"></div>
+<div class="cursor-droplet-trail" id="cursorTrail3"></div>
+
+<!-- SCROLL PROGRESS -->
+<div class="scroll-progress" id="scrollProgress"></div>
+
+<!-- PRELOADER -->
+<div class="preloader" id="preloader">
+  <video id="preloader-video" src="Пустой шаблон_files/start_video.mov" playsinline autoplay></video>
+  <div class="preloader-skip">
+    <button id="preloaderSkipBtn" class="preloader-skip-btn">Пропустить</button>
+  </div>
+</div>
+
+<!-- INFO BANNER -->
+<div class="info-banner" id="infoBanner">
+  <div class="info-banner-inner">
+    <button class="info-banner-close" id="infoBannerClose">&times;</button>
+    <h2>Станьте партнёром «Глюкоши»</h2>
+    <p>Большие изменения начинаются с объединения людей, которым небезразлично будущее детей. Мы верим, что вместе можно сделать больше, чем поодиночке.</p>
+    <p>Мы приглашаем к сотрудничеству больницы, благотворительные фонды, образовательные учреждения, компании и специалистов — всех, кто готов вместе создавать проекты поддержки семей, воспитывающих детей с сахарным диабетом 1 типа.</p>
+    <p>Заполните анкету партнёра и станьте частью добрых перемен вместе с «Глюкошей». Каждое партнёрство — это шаг к тому, чтобы ни одна семья не осталась без помощи.</p>
+    <a href="#contacts" class="info-banner-btn" id="infoBannerBtn">Стать партнёром</a>
+  </div>
+</div>
+
+<!-- THREE.JS BACKGROUND -->
+<canvas id="three-canvas"></canvas>
+
+<!-- FLOATING SHAPES -->
+<div class="floating-shapes" id="floatingShapes"></div>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="navbar-inner">
+    <a href="#hero" class="navbar-brand">
+      <div class="navbar-title">Глюко<span>ша</span></div>
+    </a>
+    <ul class="navbar-menu">
+      <li><a href="#hero" class="active"><span>Глюкоша</span></a></li>
+      <li><a href="#about"><span>О проекте</span></a></li>
+      <li><a href="#whatwedo"><span>Что мы делаем?</span></a></li>
+      <li><a href="#support"><span>Поддержка родителей</span></a></li>
+      <li><a href="#materials"><span>Полезные материалы</span></a></li>
+      <li><a href="#institutions"><span>Поддержка учреждений</span></a></li>
+      <li><a href="#kindergarten"><span>Будущий детский сад</span></a></li>
+      <li><a href="#contacts"><span>Контакты</span></a></li>
+    </ul>
+    <button class="mobile-toggle" id="mobileToggle" aria-label="Меню">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#hero" onclick="closeMobile()">Глюкоша</a>
+  <a href="#about" onclick="closeMobile()">О проекте</a>
+  <a href="#whatwedo" onclick="closeMobile()">Что мы делаем?</a>
+  <a href="#support" onclick="closeMobile()">Поддержка родителей</a>
+  <a href="#materials" onclick="closeMobile()">Полезные материалы</a>
+  <a href="#institutions" onclick="closeMobile()">Поддержка учреждений</a>
+  <a href="#kindergarten" onclick="closeMobile()">Будущий детский сад</a>
+  <a href="#contacts" onclick="closeMobile()">Контакты</a>
+</div>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-mesh"></div>
+  <div class="hero-orbs">
+    <div class="hero-orb"></div>
+    <div class="hero-orb"></div>
+    <div class="hero-orb"></div>
+  </div>
+  <div class="hero-particles" id="particles"></div>
+  <div class="hero-content">
+    <div class="hero-glass" id="heroGlass">
+      <div class="hero-badge">Проект поддержки семей</div>
+      <h1 id="heroTitle"><span class="hero-word-blue">Глюкоша</span> — это проект<br>поддержки семей,<br>воспитывающих детей<br>с сахарным диабетом<br><span class="hero-word-orange">1 типа.</span></h1>
+      <div class="hero-text">
+        <p>Мы знаем, как меняется жизнь семьи после постановки диагноза.</p>
+        <p>Страх, тревога, бесконечные вопросы, необходимость быстро учиться новому и брать ответственность за здоровье ребёнка — через это проходит каждая семья.</p>
+        <p>В этот момент особенно важно понимать, что вы не одни.</p>
+      </div>
+    </div>
+  </div>
+  <div class="hero-scroll">
+    <div class="hero-scroll-icon"></div>
+    <span>Листайте вниз</span>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section class="section about" id="about">
+  <div class="section-inner">
+    <div class="about-grid">
+      <div class="about-visual reveal-left">
+        <div class="about-floating-badge">❓</div>
+        <div class="about-3d-card" data-tilt>
+          <img src="Пустой шаблон_files/1_tov.png" alt="О проекте Глюкоша">
+        </div>
+      </div>
+      <div class="about-content reveal-right">
+        <div class="section-label">О проекте</div>
+        <h2>Как появился Глюкоша❓</h2>
+        <p class="about-desc">Глюкоша родился из личного опыта мамы ребёнка с СД1. Это путь через страх, бессонные ночи, поиск ответов и желание сделать жизнь других семей легче.</p>
+        <ul class="about-list">
+          <li>поддержка родителей</li>
+          <li>полезные материалы</li>
+          <li>дневники самоконтроля</li>
+          <li>памятки</li>
+          <li>тревожные наборы</li>
+          <li>сообщество взаимопомощи</li>
+          <li>шаг к созданию детского сада и центров</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHAT WE DO -->
+<section class="section whatwedo" id="whatwedo">
+  <div class="section-inner">
+    <div class="section-header reveal">
+      <div class="section-label">Направления</div>
+      <h2>Что мы делаем ❓</h2>
+      <p>Проект «Глюкоша» объединяет несколько направлений помощи семьям и учреждениям</p>
+    </div>
+    <div class="cards-grid">
+      <div class="card-3d stagger" data-tilt>
+        <div class="card-3d-icon"><img src="https://cdn-icons-png.flaticon.com/512/9500/9500550.png" width="40" height="40" alt="Поддержка семей"></div>
+        <h3>Поддержка семей</h3>
+        <p>Мы сделали сообщество для родителей, чтобы общаться и получать поддержку</p>
+      </div>
+      <div class="card-3d stagger" data-tilt>
+        <div class="card-3d-icon"><img src="https://cdn-icons-png.flaticon.com/512/10849/10849147.png" width="40" height="40" alt="Полезные материалы"></div>
+        <h3>Полезные материалы</h3>
+        <p>Понятные памятки, дневник контроля за сахаром и самочувствием, раскраски</p>
+      </div>
+      <div class="card-3d stagger" data-tilt>
+        <div class="card-3d-icon"><img src="https://cdn-icons-png.flaticon.com/512/619/619051.png" width="40" height="40" alt="Поддержка учреждений"></div>
+        <h3>Поддержка специализированных учреждений</h3>
+        <p>Проект «Глюкоша» оказывает информационную и социальную поддержку детским эндокринологическим отделениям, больницам и медицинским учреждениям, работающим с детьми, имеющими сахарный диабет 1 типа.</p>
+      </div>
+      <div class="card-3d stagger" data-tilt>
+        <div class="card-3d-icon"><img src="https://cdn-icons-png.flaticon.com/512/2383/2383125.png" width="40" height="40" alt="Будущий детский сад"></div>
+        <h3>Будущий детский сад и реабилитационные центры</h3>
+        <p>Мы мечтаем создать специализированные детские сады и центры дневного пребывания для детей с СД1, где каждая семья сможет получить заботу, поддержку и безопасную среду для развития ребёнка.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAMILY SUPPORT -->
+<section class="section support" id="support">
+  <div class="section-inner">
+    <div class="support-grid">
+      <div class="support-content reveal-left">
+        <div class="section-label">Для родителей</div>
+        <h2>Поддержка семей</h2>
+        <p class="support-desc">«Глюкоша» — это не просто проект. Это сообщество родителей, которые знают, как сильно меняется жизнь после диагноза сахарный диабет 1 типа.</p>
+        <p class="support-desc">Мы создали пространство, где семьи могут получить поддержку, полезную информацию и понимание от людей, которые проходят этот путь сами.<br>Мы помогаем через:</p>
+        <div class="support-items">
+          <div class="support-item stagger"><div class="support-item-icon">💛</div><p>понятные материалы и памятки для родителей</p></div>
+          <div class="support-item stagger"><div class="support-item-icon">📒</div><p>дневники самоконтроля для детей</p></div>
+          <div class="support-item stagger"><div class="support-item-icon">🧸</div><p>обучающие и развивающие материалы</p></div>
+          <div class="support-item stagger"><div class="support-item-icon">🤝</div><p>общение и поддержку семей</p></div>
+          <div class="support-item stagger"><div class="support-item-icon">🌱</div><p>социальные инициативы для детей с СД1</p></div>
+        </div>
+        <p class="support-desc" style="margin-top:22px">Наша цель — чтобы каждая семья знала: она не одна. Рядом есть люди, которые понимают, поддерживают и готовы помочь.</p>
+        <a href="https://max.ru/join/rtH091kLc2FlUXayjHNO1I5ji3FSx_l6Yq8Gu_sS0fs" target="_blank" class="magnetic-btn" data-magnetic><span>Подробнее →</span></a>
+      </div>
+      <div class="support-visual reveal-right">
+        <div class="support-img-wrap" data-tilt>
+          <img src="Пустой шаблон_files/2_tov.png" alt="Поддержка семей">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MATERIALS -->
+<section class="section materials" id="materials">
+  <div class="section-inner">
+    <div class="materials-header-strip reveal-scale">
+      <h2>Полезные материалы</h2>
+      <p>Мы создаём понятные памятки, инструкции и материалы для детей и родителей, чтобы жизнь с сахарным диабетом 1 типа становилась спокойнее, проще и увереннее каждый день.</p>
+    </div>
+    <div class="materials-cards">
+      <div class="material-card reveal-left" data-tilt>
+        <div class="material-card-img">
+          <img src="Пустой шаблон_files/3-tov.png" alt="Дневник контроля сахара">
+          <div class="material-card-overlay">
+            <p>Дневник самоконтроля «Глюкоша» помогает удобно отслеживать показатели сахара, питание, инсулин и самочувствие ребёнка. Он создан родителями для родителей, чтобы сделать ежедневный контроль понятнее, спокойнее и удобнее.</p>
+          </div>
+        </div>
+      </div>
+      <div class="material-card reveal-right" data-tilt>
+        <div class="material-card-img">
+          <img src="Пустой шаблон_files/4-tov.png" alt="Памятки и раскраски">
+          <div class="material-card-overlay">
+            <p>Понятные и полезные памятки, которые помогают разобраться в жизни с сахарным диабетом 1 типа. Простые инструкции, важные советы и ответы на вопросы, которые возникают у каждой семьи после постановки диагноза. Игровые раскраски для детей.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INSTITUTIONS -->
+<section class="section institutions" id="institutions">
+  <div class="section-inner">
+    <div class="institutions-grid">
+      <div class="institutions-img-wrap reveal-left" data-tilt>
+        <img src="Пустой шаблон_files/5-tov.png" alt="Поддержка учреждений">
+      </div>
+      <div class="institutions-content reveal-right">
+        <div class="section-label">Для учреждений</div>
+        <h2>Поддержка специализированных учреждений</h2>
+        <p>Мы стремимся помогать детским эндокринологическим отделениям и больницам, где семьи впервые сталкиваются с диагнозом сахарный диабет 1 типа.</p>
+        <p>Через памятки, дневники самоконтроля, обучающие материалы и добрые детские пособия мы помогаем родителям получить ответы на важные вопросы и почувствовать поддержку в один из самых сложных периодов жизни.</p>
+        <p>Мы верим, что забота о семье начинается не только с лечения, но и с понимания, информации и человеческого участия.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- KINDERGARTEN -->
+<section class="section kindergarten" id="kindergarten">
+  <div class="section-inner">
+    <div class="kindergarten-grid">
+      <div class="kindergarten-content reveal-left">
+        <div class="section-label">Мечта</div>
+        <h2>Будущий детский сад и реабилитационные центры</h2>
+        <p>Сегодня «Глюкоша» помогает семьям через сообщество, полезные материалы, дневники самоконтроля и информационную поддержку. Но наша главная мечта намного больше.</p>
+        <p>В будущем мы стремимся создать специализированные детские сады, центры дневного пребывания и реабилитационные пространства для детей с сахарным диабетом 1 типа.</p>
+        <p>Мы хотим, чтобы родители могли спокойно доверить ребёнка подготовленным специалистам, а дети находились в безопасной среде, где понимают особенности жизни с СД1.</p>
+        <p>Это будут места, где дети смогут учиться, играть, развиваться, находить друзей и чувствовать себя такими же, как все. А родители смогут получать поддержку, консультации специалистов, обучение и возможность немного выдохнуть после ежедневной нагрузки, связанной с контролем заболевания.</p>
+        <p>Мы мечтаем создать пространство, в котором медицинская безопасность будет сочетаться с заботой, развитием, социализацией и семейной поддержкой.</p>
+        <p>Это большая задача, которая требует времени, ресурсов и единомышленников. Но именно к этому будущему сегодня шаг за шагом движется проект «Глюкоша».</p>
+        <p>Потому что каждый ребёнок с сахарным диабетом 1 типа заслуживает счастливого детства, а каждая семья — уверенности в завтрашнем дне.</p>
+      </div>
+      <div class="kindergarten-img-wrap reveal-right" data-tilt>
+        <img src="Пустой шаблон_files/6-tov.png" alt="Будущий детский сад">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section class="section team" id="team">
+  <div class="section-inner">
+    <div class="team-strip reveal-scale">
+      <h2>Руководители проекта</h2>
+      <p>Люди, которые создали и ведут проект ГЛЮКОША 💛</p>
+    </div>
+    <div class="team-cards">
+      <div class="team-card reveal-left" data-tilt>
+        <div class="team-card-photo"><img src="Пустой шаблон_files/7c3c607d_5f39_4465_a93b_421164762568_1x.jpg" alt="Григорьева Юлия"></div>
+        <h3>Григорьева Юлия</h3>
+        <div class="team-role">Основатель и руководитель проекта Глюкоша</div>
+        <ul>
+          <li>разработка и реализация стратегии развития проекта</li>
+          <li>создание новых социальных инициатив и программ поддержки семей</li>
+          <li>взаимодействие с государственными учреждениями, больницами, фондами и партнёрами</li>
+          <li>представление проекта на мероприятиях, конференциях и общественных площадках</li>
+          <li>привлечение спонсоров, грантов и благотворительной поддержки</li>
+          <li>контроль качества материалов и продукции проекта</li>
+          <li>формирование команды и развитие новых направлений деятельности</li>
+          <li>принятие ключевых решений по развитию проекта</li>
+        </ul>
+      </div>
+      <div class="team-card reveal-right" data-tilt>
+        <div class="team-card-photo"><img src="Пустой шаблон_files/529f84a4_311b_4ffb_885b_00b27b5f4d86_1x.jpg" alt="Симония Анна"></div>
+        <h3>Симония Анна</h3>
+        <div class="team-role">Руководитель и координатор проекта Глюкоша</div>
+        <ul>
+          <li>координация ежедневной деятельности проекта</li>
+          <li>организация мероприятий, встреч и социальных инициатив</li>
+          <li>взаимодействие с участниками сообщества и партнёрами проекта</li>
+          <li>контроль выполнения задач командой и волонтёрами</li>
+          <li>помощь в подготовке информационных материалов и публикаций</li>
+          <li>организация работы по заказам продукции проекта</li>
+          <li>ведение документооборота и отчётности по проекту</li>
+          <li>сопровождение сотрудничества с медицинскими учреждениями и организациями</li>
+          <li>контроль сроков выполнения проектов и мероприятий</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOCIAL -->
+<section class="section social" id="social">
+  <div class="section-inner">
+    <div class="social-inner">
+      <h2 class="reveal">Социальные сети</h2>
+      <div class="social-carousel social-carousel-enter" id="socialCarousel">
+        <a href="https://vk.ru/glykosha1" target="_blank" class="social-orb" data-tilt>
+          <div class="social-orb-glow"></div>
+          <div class="social-orb-icon social-orb-icon--vk">
+            <img src="https://cdn-icons-png.flaticon.com/512/152/152813.png" alt="ВКонтакте" width="32" height="32">
+          </div>
+          <h3>ВКонтакте</h3>
+          <p>Наше сообщество</p>
+        </a>
+        <a href="https://max.ru/join/rtH091kLc2FlUXayjHNO1I5ji3FSx_l6Yq8Gu_sS0fs" target="_blank" class="social-orb" data-tilt>
+          <div class="social-orb-glow"></div>
+          <div class="social-orb-icon social-orb-icon--max">
+            <img src="https://maxicons.ru/icons/Max_logo_black.svg" alt="MAX" width="26" height="26">
+          </div>
+          <h3>MAX</h3>
+          <p>Присоединяйся</p>
+        </a>
+        <a href="https://t.me/glykosha1" target="_blank" class="social-orb" data-tilt>
+          <div class="social-orb-glow"></div>
+          <div class="social-orb-icon social-orb-icon--tg">
+            <img src="https://www.svgrepo.com/show/521874/telegram.svg" alt="Telegram" width="32" height="32">
+          </div>
+          <h3>Telegram</h3>
+          <p>Канал сообщества</p>
+        </a>
+        <a href="mailto:glykosha.yulia@inbox.ru" class="social-orb" data-tilt>
+          <div class="social-orb-glow"></div>
+          <div class="social-orb-icon social-orb-icon--mail">
+            <img src="https://www.svgrepo.com/show/479773/email-8.svg" alt="Email" width="32" height="32">
+          </div>
+          <h3>Email</h3>
+          <p>Напишите нам</p>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACTS -->
+<section class="section contacts" id="contacts">
+  <div class="section-inner">
+    <h2 class="reveal" style="text-align:center;margin-bottom:10px;">Обратная связь</h2>
+    <p class="reveal" style="text-align:center;font-size:18px;color:var(--text-light);margin-bottom:40px;">Напишите нам — мы обязательно ответим</p>
+    <div style="text-align:center;margin-bottom:20px;"><span class="section-label">Связь</span></div>
+    <form class="feedback-form reveal" id="feedbackForm" onsubmit="return false;">
+      <div class="feedback-row">
+        <div class="feedback-field">
+          <label for="fLastName">Фамилия</label>
+          <input type="text" id="fLastName" placeholder="Введите фамилию" required>
+        </div>
+        <div class="feedback-field">
+          <label for="fFirstName">Имя</label>
+          <input type="text" id="fFirstName" placeholder="Введите имя" required>
+        </div>
+      </div>
+      <div class="feedback-row">
+        <div class="feedback-field">
+          <label for="fPhone">Номер телефона</label>
+          <input type="tel" id="fPhone" placeholder="+7 (___) ___-__-__" required>
+        </div>
+        <div class="feedback-field">
+          <label for="fEmail">Email</label>
+          <input type="email" id="fEmail" placeholder="example@mail.ru" required>
+        </div>
+      </div>
+      <div class="feedback-field feedback-field--full">
+        <label for="fMessage">Сообщение</label>
+        <textarea id="fMessage" rows="5" placeholder="Ваше сообщение..." required></textarea>
+      </div>
+      <button type="submit" class="feedback-btn magnetic-btn" data-magnetic>
+        <span>Отправить</span>
+      </button>
+    </form>
+
+    <div class="feedback-choice" id="feedbackChoice">
+      <div class="feedback-choice-inner">
+        <h3>Выберите тип обращения</h3>
+        <button class="feedback-choice-btn feedback-choice-btn--regular" id="choiceRegular" type="button">Обычное обращение</button>
+        <button class="feedback-choice-btn feedback-choice-btn--partner" id="choicePartner" type="button">Стать нашим партнёром</button>
+        <button class="feedback-choice-cancel" id="choiceCancel" type="button">Отмена</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ADMIN PANEL -->
+<div class="admin-overlay" id="adminOverlay">
+  <div class="admin-panel">
+    <div class="admin-header">
+      <h2>Панель заявок</h2>
+      <button class="admin-close" id="adminClose">&times;</button>
+    </div>
+    <div class="admin-body" id="adminBody">
+      <div class="admin-section">
+        <div class="admin-section-title">Обычное обращение граждан</div>
+        <div class="admin-section-list" id="adminRegular"></div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-title admin-section-title--partner">Партнёрское обращение</div>
+        <div class="admin-section-list" id="adminPartner"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-logo">
+      <div class="footer-logo-icon"><img src="Пустой шаблон_files/glyukosha_sayt_montazhnaya_oblast_1_1x.png" alt="Глюкоша"></div>
+      <span>Глюко<em>ша</em></span>
+    </div>
+    <p class="footer-copy">Проект поддержки семей, воспитывающих детей с сахарным диабетом 1 типа</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+
+// === THREE.JS 3D BACKGROUND ===
+var canvas=document.getElementById('three-canvas');
+if(typeof THREE!=='undefined'){
+  var scene=new THREE.Scene();
+  var camera=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,1000);
+  var renderer=new THREE.WebGLRenderer({canvas:canvas,alpha:true,antialias:true});
+  renderer.setSize(window.innerWidth,window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  camera.position.z=30;
+
+  var geometry=new THREE.IcosahedronGeometry(8,3);
+  var material=new THREE.MeshPhongMaterial({
+    color:0x4A9FE5,wireframe:true,transparent:true,opacity:0.12,
+    emissive:0x4A9FE5,emissiveIntensity:0.05
+  });
+  var sphere=new THREE.Mesh(geometry,material);
+  scene.add(sphere);
+
+  var geometry2=new THREE.TorusGeometry(12,0.3,16,100);
+  var material2=new THREE.MeshPhongMaterial({
+    color:0xFFB347,wireframe:true,transparent:true,opacity:0.08,
+    emissive:0xFFB347,emissiveIntensity:0.05
+  });
+  var torus=new THREE.Mesh(geometry2,material2);
+  torus.rotation.x=Math.PI/4;
+  scene.add(torus);
+
+  var geometry3=new THREE.OctahedronGeometry(5,0);
+  var material3=new THREE.MeshPhongMaterial({
+    color:0xFF8C69,wireframe:true,transparent:true,opacity:0.06,
+    emissive:0xFF8C69,emissiveIntensity:0.05
+  });
+  var octa=new THREE.Mesh(geometry3,material3);
+  octa.position.set(15,-8,0);
+  scene.add(octa);
+
+  var particleGeo=new THREE.BufferGeometry();
+  var particleCount=200;
+  var positions=new Float32Array(particleCount*3);
+  for(var i=0;i<particleCount*3;i++){
+    positions[i]=(Math.random()-0.5)*60;
+  }
+  particleGeo.setAttribute('position',new THREE.BufferAttribute(positions,3));
+  var particleMat=new THREE.PointsMaterial({color:0x4A9FE5,size:0.08,transparent:true,opacity:0.4});
+  var particles3D=new THREE.Points(particleGeo,particleMat);
+  scene.add(particles3D);
+
+  var light1=new THREE.PointLight(0x4A9FE5,1,100);
+  light1.position.set(10,10,10);
+  scene.add(light1);
+  var light2=new THREE.PointLight(0xFFB347,0.5,100);
+  light2.position.set(-10,-10,-10);
+  scene.add(light2);
+
+  var mouseX=0,mouseY=0;
+  document.addEventListener('mousemove',function(e){
+    mouseX=(e.clientX/window.innerWidth-0.5)*2;
+    mouseY=(e.clientY/window.innerHeight-0.5)*2;
+  });
+
+  function animate3D(){
+    requestAnimationFrame(animate3D);
+    var scrollY=window.pageYOffset;
+    sphere.rotation.x+=0.002;sphere.rotation.y+=0.003;
+    sphere.rotation.x+=mouseY*0.001;sphere.rotation.y+=mouseX*0.001;
+    torus.rotation.x+=0.004;torus.rotation.z+=0.002;
+    octa.rotation.y+=0.005;octa.rotation.z+=0.003;
+    particles3D.rotation.y+=0.001;
+    camera.position.y=-scrollY*0.005;
+    renderer.render(scene,camera);
+  }
+  animate3D();
+  window.addEventListener('resize',function(){
+    camera.aspect=window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth,window.innerHeight);
+  });
+}
+
+// === PRELOADER VIDEO ===
+(function(){
+  var video=document.getElementById('preloader-video');
+  var preloaderEl=document.getElementById('preloader');
+  var skipBtn=document.getElementById('preloaderSkipBtn');
+  if(!video||!preloaderEl)return;
+
+  var preloaderHidden=false;
+  var volumeSteps=[0.25,0.45,0.65,0.85,1.0];
+  var stepIndex=0;
+  var titleEl=document.querySelector('.preloader-title');
+
+  function hidePreloader(){
+    if(preloaderHidden)return;
+    preloaderHidden=true;
+    preloaderEl.classList.add('hidden');
+    setTimeout(function(){
+      preloaderEl.remove();
+      showInfoBanner();
+    },1300);
+  }
+
+  function showInfoBanner(){
+    var banner=document.getElementById('infoBanner');
+    if(banner){
+      banner.classList.add('active');
+    }
+  }
+
+  function fadeOutTitle(callback){
+    if(titleEl){
+      titleEl.classList.add('fade-out');
+      setTimeout(callback,800);
+    } else {
+      callback();
+    }
+  }
+
+  video.volume=0.25;
+
+  var playPromise=video.play();
+  if(playPromise!==undefined){
+    playPromise.catch(function(){
+      video.muted=true;
+      video.volume=0.25;
+      video.play().catch(function(){});
+    });
+  }
+
+  video.addEventListener('timeupdate',function(){
+    if(video.duration&&video.currentTime>=video.duration-3&&!titleEl.classList.contains('fade-out')){
+      titleEl.classList.add('fade-out');
+    }
+  });
+
+  var volumeInterval=setInterval(function(){
+    stepIndex++;
+    if(stepIndex<volumeSteps.length){
+      video.volume=volumeSteps[stepIndex];
+    } else {
+      clearInterval(volumeInterval);
+    }
+  },1800);
+
+  video.addEventListener('ended',function(){
+    clearInterval(volumeInterval);
+    fadeOutTitle(hidePreloader);
+  });
+
+  if(skipBtn){
+    skipBtn.addEventListener('click',function(){
+      clearInterval(volumeInterval);
+      video.pause();
+      fadeOutTitle(hidePreloader);
+    });
+  }
+
+  video.addEventListener('click',function(){
+    clearInterval(volumeInterval);
+    video.pause();
+    fadeOutTitle(hidePreloader);
+  });
+})();
+
+// === INFO BANNER ===
+(function(){
+  var banner=document.getElementById('infoBanner');
+  var closeBtn=document.getElementById('infoBannerClose');
+  var partnerBtn=document.getElementById('infoBannerBtn');
+  if(!banner)return;
+
+  function closeBanner(){
+    banner.style.opacity='0';
+    setTimeout(function(){banner.remove()},500);
+  }
+
+  closeBtn.addEventListener('click',closeBanner);
+  banner.addEventListener('click',function(e){
+    if(e.target===banner)closeBanner();
+  });
+
+  partnerBtn.addEventListener('click',function(e){
+    e.preventDefault();
+    closeBanner();
+    setTimeout(function(){
+      var contacts=document.getElementById('contacts');
+      if(contacts)contacts.scrollIntoView({behavior:'smooth',block:'start'});
+      setTimeout(function(){
+        var feedbackForm=document.getElementById('feedbackForm');
+        if(feedbackForm){
+          feedbackForm.style.opacity='0';feedbackForm.style.transform='scale(0.95)';
+          setTimeout(function(){
+            feedbackForm.outerHTML='<div class="partner-form reveal visible"><h3>Анкета партнёра</h3><p>Заполните форму, и мы свяжемся с вами для обсуждения сотрудничества.</p><form id="partnerForm" onsubmit="return false;"><div class="feedback-row"><div class="feedback-field"><label>Название организации</label><input type="text" id="pOrgName" placeholder="Название организации" required></div><div class="feedback-field"><label>Контактное лицо</label><input type="text" id="pContact" placeholder="ФИО контактного лица" required></div></div><div class="feedback-row"><div class="feedback-field"><label>Телефон</label><input type="tel" id="pPhone" placeholder="+7 (___) ___-__-__" required></div><div class="feedback-field"><label>Email</label><input type="email" id="pEmail" placeholder="email@example.com" required></div></div><div class="feedback-field feedback-field--full"><label>Организация и цели сотрудничества</label><textarea id="pMessage" rows="4" placeholder="Расскажите о вашей организации и как вы хотели бы помочь..." required></textarea></div><button type="submit" class="feedback-btn" style="display:block;margin-left:auto;margin-right:auto;padding:16px 48px;background:var(--gradient-accent);box-shadow:0 8px 30px rgba(255,179,71,0.35)"><span>Отправить анкету</span></button></form></div>';
+            var partnerForm=document.getElementById('partnerForm');
+            if(partnerForm){
+              partnerForm.addEventListener('submit',function(ev){
+                ev.preventDefault();
+                var data={
+                  lastName:document.getElementById('pContact').value,
+                  firstName:'',
+                  phone:document.getElementById('pPhone').value,
+                  email:document.getElementById('pEmail').value,
+                  message:'[Организация: '+document.getElementById('pOrgName').value+'] '+document.getElementById('pMessage').value,
+                  date:new Date().toLocaleString('ru-RU'),
+                  type:'partner'
+                };
+                var submissions=JSON.parse(localStorage.getItem('glykosha_submissions')||'[]');
+                submissions.push(data);
+                localStorage.setItem('glykosha_submissions',JSON.stringify(submissions));
+                partnerForm.outerHTML='<div class="feedback-success active"><h3>Спасибо за анкету!</h3><p>Мы свяжемся с вами для обсуждения партнёрства.</p></div>';
+              });
+            }
+          },400);
+        }
+      },600);
+    },500);
+  });
+})();
+
+// === КАПЛЯ CURSOR ===
+var cursorEl=document.getElementById('cursorDroplet');
+var trail1=document.getElementById('cursorTrail1');
+var trail2=document.getElementById('cursorTrail2');
+var trail3=document.getElementById('cursorTrail3');
+var curX=0,curY=0,t1X=0,t1Y=0,t2X=0,t2Y=0,t3X=0,t3Y=0;
+document.addEventListener('mousemove',function(e){curX=e.clientX;curY=e.clientY});
+function animateDropletCursor(){
+  t1X+=(curX-t1X)*0.18;t1Y+=(curY-t1Y)*0.18;
+  t2X+=(t1X-t2X)*0.12;t2Y+=(t1Y-t2Y)*0.12;
+  t3X+=(t2X-t3X)*0.08;t3Y+=(t2Y-t3Y)*0.08;
+  cursorEl.style.left=curX+'px';cursorEl.style.top=curY+'px';
+  trail1.style.left=t1X+'px';trail1.style.top=t1Y+'px';
+  trail2.style.left=t2X+'px';trail2.style.top=t2Y+'px';
+  trail3.style.left=t3X+'px';trail3.style.top=t3Y+'px';
+  requestAnimationFrame(animateDropletCursor);
+}
+animateDropletCursor();
+document.addEventListener('mousedown',function(){
+  cursorEl.classList.add('click');
+  setTimeout(function(){cursorEl.classList.remove('click')},250);
+});
+var hoverTargets=document.querySelectorAll('a,button,[data-tilt],.card-3d,.social-card,.contact-card,.support-item,.about-list li');
+hoverTargets.forEach(function(el){
+  el.addEventListener('mouseenter',function(){cursorEl.classList.add('hover')});
+  el.addEventListener('mouseleave',function(){cursorEl.classList.remove('hover')});
+});
+
+// === SCROLL PROGRESS ===
+var scrollProgress=document.getElementById('scrollProgress');
+window.addEventListener('scroll',function(){
+  var scrollTop=window.pageYOffset;
+  var docHeight=document.documentElement.scrollHeight-window.innerHeight;
+  var progress=scrollTop/docHeight;
+  scrollProgress.style.transform='scaleX('+progress+')';
+},{passive:true});
+
+// === NAVBAR ===
+var navbar=document.getElementById('navbar');
+window.addEventListener('scroll',function(){
+  if(window.pageYOffset>80){navbar.classList.add('scrolled')}else{navbar.classList.remove('scrolled')}
+},{passive:true});
+
+var mobileToggle=document.getElementById('mobileToggle');
+var mobileMenu=document.getElementById('mobileMenu');
+mobileToggle.addEventListener('click',function(){
+  mobileToggle.classList.toggle('active');
+  mobileMenu.classList.toggle('active');
+  document.body.style.overflow=mobileMenu.classList.contains('active')?'hidden':'';
+});
+window.closeMobile=function(){
+  mobileToggle.classList.remove('active');
+  mobileMenu.classList.remove('active');
+  document.body.style.overflow='';
+};
+
+var navLinks=document.querySelectorAll('.navbar-menu a');
+var sections=document.querySelectorAll('section[id]');
+window.addEventListener('scroll',function(){
+  var scrollY=window.pageYOffset+140;
+  sections.forEach(function(sec){
+    var top=sec.offsetTop;var height=sec.offsetHeight;var id=sec.getAttribute('id');
+    if(scrollY>=top&&scrollY<top+height){
+      navLinks.forEach(function(l){l.classList.remove('active')});
+      var active=document.querySelector('.navbar-menu a[href="#'+id+'"]');
+      if(active)active.classList.add('active');
+    }
+  });
+},{passive:true});
+
+// === PARTICLES ===
+var particles=document.getElementById('particles');
+for(var i=0;i<25;i++){
+  var p=document.createElement('div');p.className='particle';
+  var size=Math.random()*6+2;
+  p.style.width=size+'px';p.style.height=size+'px';
+  p.style.left=Math.random()*100+'%';
+  p.style.animationDuration=(Math.random()*12+8)+'s';
+  p.style.animationDelay=(Math.random()*10)+'s';
+  p.style.background='rgba(255,255,255,'+(Math.random()*0.3+0.2)+')';
+  particles.appendChild(p);
+}
+
+// === FLOATING SHAPES ===
+// (replaced by toys layer)
+
+// === HERO TEXT ANIMATION ===
+var heroTitle=document.getElementById('heroTitle');
+var htmlSource=heroTitle.innerHTML;
+heroTitle.innerHTML='';
+var charIndex=0;
+var pos=0;
+while(pos<htmlSource.length){
+  if(htmlSource.substr(pos,4)==='<br>'){pos+=4;heroTitle.appendChild(document.createElement('br'));continue;}
+  if(htmlSource.substr(pos,5)==='<br/>'){pos+=5;heroTitle.appendChild(document.createElement('br'));continue;}
+  if(htmlSource.substr(pos,6)==='<br />'){pos+=6;heroTitle.appendChild(document.createElement('br'));continue;}
+  var spanMatch=htmlSource.substring(pos).match(/^<span class="([^"]*)">/);
+  if(spanMatch){
+    var cls=spanMatch[1];
+    pos+=spanMatch[0].length;
+    var closeIdx=htmlSource.indexOf('</span>',pos);
+    var text=htmlSource.substring(pos,closeIdx);
+    pos=closeIdx+'</span>'.length;
+    var wrapper=document.createElement('span');
+    wrapper.className=cls;
+    for(var i=0;i<text.length;i++){
+      if(text[i]===' '){wrapper.appendChild(document.createTextNode(' '));}
+      else{
+        var s=document.createElement('span');
+        s.className='char';
+        s.textContent=text[i];
+        s.style.animationDelay=(0.8+charIndex*0.03)+'s';
+        wrapper.appendChild(s);
+        charIndex++;
+      }
+    }
+    heroTitle.appendChild(wrapper);
+    continue;
+  }
+  var ch=htmlSource[pos];pos++;
+  if(ch===' '){heroTitle.appendChild(document.createTextNode(' '));}
+  else{
+    var s=document.createElement('span');
+    s.className='char';
+    s.textContent=ch;
+    s.style.animationDelay=(0.8+charIndex*0.03)+'s';
+    heroTitle.appendChild(s);
+    charIndex++;
+  }
+}
+
+// === SCROLL REVEAL ===
+var reveals=document.querySelectorAll('.reveal,.reveal-left,.reveal-right,.reveal-scale');
+var revealObserver=new IntersectionObserver(function(entries){
+  entries.forEach(function(entry){
+    if(entry.isIntersecting){entry.target.classList.add('visible')}
+  });
+},{threshold:0.12,rootMargin:'0px 0px -50px 0px'});
+reveals.forEach(function(el){revealObserver.observe(el)});
+
+var staggers=document.querySelectorAll('.stagger');
+var staggerObserver=new IntersectionObserver(function(entries){
+  entries.forEach(function(entry){
+    if(entry.isIntersecting){
+      var parent=entry.target.parentElement;
+      var items=parent.querySelectorAll('.stagger');
+      items.forEach(function(item,idx){
+        setTimeout(function(){item.classList.add('visible')},idx*120);
+      });
+    }
+  });
+},{threshold:0.1,rootMargin:'0px 0px -30px 0px'});
+staggers.forEach(function(el){staggerObserver.observe(el)});
+
+// === 3D TILT ===
+var tiltElements=document.querySelectorAll('[data-tilt]');
+tiltElements.forEach(function(card){
+  card.style.transformStyle='preserve-3d';
+  card.addEventListener('mousemove',function(e){
+    var rect=card.getBoundingClientRect();
+    var x=e.clientX-rect.left;var y=e.clientY-rect.top;
+    var centerX=rect.width/2;var centerY=rect.height/2;
+    var rotateX=((y-centerY)/centerY)*-8;
+    var rotateY=((x-centerX)/centerX)*8;
+    card.style.transform='perspective(1000px) rotateX('+rotateX+'deg) rotateY('+rotateY+'deg) translateZ(12px) scale(1.02)';
+  });
+  card.addEventListener('mouseleave',function(){
+    card.style.transition='transform 0.6s cubic-bezier(0.34,1.56,0.64,1)';
+    card.style.transform='perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px) scale(1)';
+    setTimeout(function(){card.style.transition='none'},600);
+  });
+  card.addEventListener('mouseenter',function(){card.style.transition='none'});
+});
+
+// === MAGNETIC BUTTONS ===
+var magneticBtns=document.querySelectorAll('[data-magnetic]');
+magneticBtns.forEach(function(btn){
+  btn.addEventListener('mousemove',function(e){
+    var rect=btn.getBoundingClientRect();
+    var x=e.clientX-rect.left-rect.width/2;
+    var y=e.clientY-rect.top-rect.height/2;
+    btn.style.transform='translate('+x*0.3+'px,'+y*0.3+'px) scale(1.05)';
+  });
+  btn.addEventListener('mouseleave',function(){
+    btn.style.transition='transform 0.5s cubic-bezier(0.34,1.56,0.64,1)';
+    btn.style.transform='translate(0,0) scale(1)';
+    setTimeout(function(){btn.style.transition=''},500);
+  });
+});
+
+// === HERO GLASS TILT ===
+var heroGlass=document.getElementById('heroGlass');
+heroGlass.addEventListener('mousemove',function(e){
+  var rect=heroGlass.getBoundingClientRect();
+  var x=e.clientX-rect.left;var y=e.clientY-rect.top;
+  var centerX=rect.width/2;var centerY=rect.height/2;
+  var rotateX=((y-centerY)/centerY)*-4;
+  var rotateY=((x-centerX)/centerX)*4;
+  heroGlass.style.transform='perspective(1200px) rotateX('+rotateX+'deg) rotateY('+rotateY+'deg)';
+});
+heroGlass.addEventListener('mouseleave',function(){
+  heroGlass.style.transition='transform 0.6s cubic-bezier(0.34,1.56,0.64,1)';
+  heroGlass.style.transform='perspective(1200px) rotateX(0deg) rotateY(0deg)';
+  setTimeout(function(){heroGlass.style.transition=''},600);
+});
+heroGlass.addEventListener('mouseenter',function(){heroGlass.style.transition='none'});
+
+// === SOCIAL CAROUSEL ENTER ===
+var socialCarousel=document.getElementById('socialCarousel');
+if(socialCarousel){
+  var socialObs=new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){socialCarousel.classList.add('visible')}
+    });
+  },{threshold:0.2});
+  socialObs.observe(socialCarousel);
+}
+
+// === FEEDBACK FORM ===
+var feedbackForm=document.getElementById('feedbackForm');
+var feedbackChoice=document.getElementById('feedbackChoice');
+var choiceRegular=document.getElementById('choiceRegular');
+var choicePartner=document.getElementById('choicePartner');
+var choiceCancel=document.getElementById('choiceCancel');
+
+if(feedbackForm){
+  feedbackForm.addEventListener('submit',function(e){
+    e.preventDefault();
+    var ln=document.getElementById('fLastName').value.trim();
+    var fn=document.getElementById('fFirstName').value.trim();
+    var ph=document.getElementById('fPhone').value.trim();
+    var em=document.getElementById('fEmail').value.trim();
+    var ms=document.getElementById('fMessage').value.trim();
+    if(!ln||!fn||!ph||!em||!ms)return;
+    feedbackChoice.classList.add('active');
+  });
+}
+
+if(feedbackChoice){
+  choiceRegular.addEventListener('click',function(){
+    submitFeedback('regular');
+  });
+  choicePartner.addEventListener('click',function(){
+    submitFeedback('partner');
+  });
+  choiceCancel.addEventListener('click',function(){
+    feedbackChoice.classList.remove('active');
+  });
+  feedbackChoice.addEventListener('click',function(e){
+    if(e.target===feedbackChoice)feedbackChoice.classList.remove('active');
+  });
+}
+
+function submitFeedback(type){
+  feedbackChoice.classList.remove('active');
+  var data={
+    lastName:document.getElementById('fLastName').value,
+    firstName:document.getElementById('fFirstName').value,
+    phone:document.getElementById('fPhone').value,
+    email:document.getElementById('fEmail').value,
+    message:document.getElementById('fMessage').value,
+    date:new Date().toLocaleString('ru-RU'),
+    type:type
+  };
+  var submissions=JSON.parse(localStorage.getItem('glykosha_submissions')||'[]');
+  submissions.push(data);
+  localStorage.setItem('glykosha_submissions',JSON.stringify(submissions));
+  var form=document.getElementById('feedbackForm');
+  var successTitle=type==='partner'?'Спасибо за партнёрское обращение!':'Спасибо за обращение!';
+  var html='<div class="feedback-success active"><h3>'+successTitle+'</h3><p>Мы свяжемся с вами в ближайшее время.</p></div>';
+  form.style.opacity='0';form.style.transform='scale(0.95)';
+  setTimeout(function(){
+    form.outerHTML=html;
+    var success=document.querySelector('.feedback-success');
+    if(success){success.style.opacity='0';success.style.transform='translateY(20px)';
+      requestAnimationFrame(function(){
+        success.style.transition='all 0.6s ease';
+        success.style.opacity='1';success.style.transform='translateY(0)';
+      });
+    }
+  },400);
+}
+
+// === ADMIN PANEL ===
+(function(){
+  var brandTitle=document.querySelector('.navbar-title');
+  var overlay=document.getElementById('adminOverlay');
+  var adminClose=document.getElementById('adminClose');
+  var adminClear=document.getElementById('adminClear');
+  var adminRegular=document.getElementById('adminRegular');
+  var adminPartner=document.getElementById('adminPartner');
+  if(!brandTitle||!overlay)return;
+
+  var clicks=0;
+  var lastClick=0;
+  brandTitle.addEventListener('click',function(e){
+    e.preventDefault();
+    var now=Date.now();
+    if(now-lastClick>800){clicks=0}
+    clicks++;lastClick=now;
+    if(clicks>=5){
+      clicks=0;
+      showPasswordPrompt();
+    }
+  });
+
+  function showPasswordPrompt(){
+    var pwd=prompt('Введите пароль для доступа к панели заявок:');
+    if(pwd===null)return;
+    if(pwd==='Глюкоша'){
+      openAdmin();
+    } else {
+      alert('Неверный пароль');
+    }
+  }
+
+  function openAdmin(){
+    renderAdmin();
+    overlay.classList.add('active');
+    document.body.style.overflow='hidden';
+    document.body.style.cursor='auto';
+  }
+
+  function closeAdmin(){
+    overlay.classList.remove('active');
+    document.body.style.overflow='';
+    document.body.style.cursor='';
+  }
+
+  function renderAdmin(){
+    var submissions=JSON.parse(localStorage.getItem('glykosha_submissions')||'[]');
+    var regular=submissions.filter(function(s){return s.type!=='partner'});
+    var partner=submissions.filter(function(s){return s.type==='partner'});
+
+    if(regular.length===0){
+      adminRegular.innerHTML='<p class="admin-section-empty">Нет обращений</p>';
+    } else {
+      var rhtml='';
+      for(var i=regular.length-1;i>=0;i--){
+        var s=regular[i];
+        var origIdx=submissions.indexOf(s);
+        rhtml+=buildCard(s,origIdx);
+      }
+      adminRegular.innerHTML=rhtml;
+    }
+
+    if(partner.length===0){
+      adminPartner.innerHTML='<p class="admin-section-empty">Нет партнёрских обращений</p>';
+    } else {
+      var phtml='';
+      for(var i=partner.length-1;i>=0;i--){
+        var s=partner[i];
+        var origIdx=submissions.indexOf(s);
+        phtml+=buildCard(s,origIdx);
+      }
+      adminPartner.innerHTML=phtml;
+    }
+
+    bindDeleteButtons();
+  }
+
+  function buildCard(s,idx){
+    var html='<div class="admin-card" data-index="'+idx+'">';
+    html+='<button class="admin-card-del" data-del="'+idx+'">Удалить</button>';
+    html+='<div class="admin-card-header"><div class="admin-card-name">'+s.lastName+' '+s.firstName+'</div><div class="admin-card-date">'+s.date+'</div></div>';
+    html+='<div class="admin-card-info"><p><strong>Тел:</strong> '+s.phone+'</p><p><strong>Email:</strong> '+s.email+'</p></div>';
+    html+='<p class="admin-card-msg">'+s.message+'</p>';
+    html+='</div>';
+    return html;
+  }
+
+  function bindDeleteButtons(){
+    overlay.querySelectorAll('[data-del]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var idx=parseInt(this.getAttribute('data-del'));
+        var submissions=JSON.parse(localStorage.getItem('glykosha_submissions')||'[]');
+        submissions.splice(idx,1);
+        localStorage.setItem('glykosha_submissions',JSON.stringify(submissions));
+        renderAdmin();
+      });
+    });
+  }
+
+  adminClose.addEventListener('click',closeAdmin);
+  overlay.addEventListener('click',function(e){
+    if(e.target===overlay)closeAdmin();
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&overlay.classList.contains('active'))closeAdmin();
+  });
+
+})();
+
+// === SMOOTH SCROLL ===
+document.querySelectorAll('a[href^="#"]').forEach(function(anchor){
+  anchor.addEventListener('click',function(e){
+    e.preventDefault();
+    var target=document.querySelector(this.getAttribute('href'));
+    if(target){target.scrollIntoView({behavior:'smooth',block:'start'})}
+  });
+});
+
+// === PARALLAX ON SCROLL ===
+window.addEventListener('scroll',function(){
+  var scrollY=window.pageYOffset;
+  var orbs=document.querySelectorAll('.hero-orb');
+  orbs.forEach(function(orb,i){
+    var speed=(i+1)*0.02;
+    orb.style.transform='translateY('+scrollY*speed+'px)';
+  });
+},{passive:true});
+
+})();
+</script>
+</body>
+</html>
